@@ -76,8 +76,14 @@ int launch(char *commandName) {
     NSBundle *mainBundle = [NSBundle mainBundle];
     NSDictionary *infoDictionary = [mainBundle infoDictionary];
 
+    // Set the working directory to the bundle root
+    NSString *mainBundlePath = [mainBundle bundlePath];
+    if (chdir([mainBundlePath UTF8String]) == -1) {
+        [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not set initial working directory."];
+    }
+
     // Get the path to the Java directory
-    NSString *javaPath = [[mainBundle bundlePath] stringByAppendingString:@"/Contents/Java"];
+    NSString *javaPath = [mainBundlePath stringByAppendingString:@"/Contents/Java"];
 
     // Get the runtime bundle URL
     // TODO If unspecified, use default runtime location
