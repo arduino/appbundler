@@ -86,9 +86,18 @@ int launch(char *commandName) {
     NSString *javaPath = [mainBundlePath stringByAppendingString:@"/Contents/Java"];
 
     // Get the runtime bundle URL
-    // TODO If unspecified, use default runtime location
     NSString *runtime = [infoDictionary objectForKey:@JVM_RUNTIME_KEY];
-    NSURL *runtimeBundleURL = [[mainBundle builtInPlugInsURL] URLByAppendingPathComponent:runtime];
+    NSURL *runtimeBundleURL;
+    if (runtime != nil) {
+        runtimeBundleURL = [[mainBundle builtInPlugInsURL] URLByAppendingPathComponent:runtime];
+    } else {
+        runtimeBundleURL = [NSURL fileURLWithPath:@"/Library/Internet Plug-Ins/JavaAppletPlugin.plugin"
+                                      isDirectory:YES];
+    }
+
+    if (runtimeBundleURL == nil) {
+        [NSException raise:@JAVA_LAUNCH_ERROR format:@"Unable to locate a JRE."];
+    }
 
     // Get the main class name
     NSString *mainClassName = [infoDictionary objectForKey:@JVM_MAIN_CLASS_NAME_KEY];

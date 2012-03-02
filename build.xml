@@ -93,6 +93,7 @@ questions.
         <delete file="${ant.project.name}/${folder.bin}/${ant.project.name}-${version}.jar"/>
         <delete dir="HelloWorld.app"/>
         <delete dir="SwingSet2.app"/>
+        <delete dir="SwingSet2Plugin.app"/>
     </target>
 
     <!-- Package target -->
@@ -147,10 +148,22 @@ questions.
             runtime="${env.JAVA_HOME}/../.."
             mainclassname="SwingSet2">
             <classpath file="/Library/Java/Demos/JFC/SwingSet2/SwingSet2.jar"/>
-            <option value="-Xms32M"/>
-            <option value="-Xmx256M"/>
             <option value="-Dapple.laf.useScreenMenuBar=true"/>
-            <argument value="foo=bar"/>
+        </bundleapp>
+    </target>
+
+    <target name="test-swingset-plugin" depends="package">
+        <taskdef name="bundleapp" classname="com.oracle.appbundler.AppBundlerTask"
+            classpath="${ant.project.name}/${folder.bin}/${ant.project.name}-${version}.jar"/>
+
+        <bundleapp outputdirectory="."
+            name="SwingSet2Plugin"
+            displayname="SwingSet 2 (Plugin)"
+            identifier="com.oracle.javax.swing.SwingSet2Plugin"
+            shortversion="1.0"
+            mainclassname="SwingSet2">
+            <classpath file="/Library/Java/Demos/JFC/SwingSet2/SwingSet2.jar"/>
+            <option value="-Dapple.laf.useScreenMenuBar=true"/>
         </bundleapp>
     </target>
 

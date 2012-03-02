@@ -356,7 +356,9 @@ public class AppBundlerTask extends Task {
             writeProperty(xout, "NSHumanReadableCopyright", copyright);
 
             // Write runtime
-            writeProperty(xout, "JVMRuntime", runtime.getName());
+            if (runtime != null) {
+                writeProperty(xout, "JVMRuntime", runtime.getName());
+            }
 
             // Write main class name
             writeProperty(xout, "JVMMainClassName", mainClassName);
