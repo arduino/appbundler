@@ -32,7 +32,6 @@
 
 #define JVM_RUNTIME_KEY "JVMRuntime"
 #define JVM_MAIN_CLASS_NAME_KEY "JVMMainClassName"
-#define JVM_CLASS_PATH_KEY "JVMClassPath"
 #define JVM_OPTIONS_KEY "JVMOptions"
 #define JVM_ARGUMENTS_KEY "JVMArguments"
 
@@ -120,22 +119,20 @@ int launch(char *commandName) {
     }
 
     // Set the class path
-    NSMutableString *classPath = [NSMutableString stringWithString:@"-Djava.class.path="];
-    NSArray *classPathEntries = [infoDictionary objectForKey:@JVM_CLASS_PATH_KEY];
-    if (classPathEntries == nil || [classPathEntries count] == 0) {
-        [NSException raise:@JAVA_LAUNCH_ERROR format:@"%@ is required.", @JVM_CLASS_PATH_KEY];
+    NSString *javaPath = [mainBundlePath stringByAppendingString:@"/Contents/Java"];
+    NSMutableString *classPath = [NSMutableString stringWithFormat:@"-Djava.class.path=%@/Classes", javaPath];
+
+    NSFileManager *defaultFileManager = [NSFileManager defaultManager];
+    NSArray *javaDirectoryContents = [defaultFileManager contentsOfDirectoryAtPath:javaPath error:nil];
+    if (javaDirectoryContents == nil) {
+        [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not enumerate Java directory contents."];
     }
 
-    for (int i = 0, n = [classPathEntries count]; i < n; i++) {
-        NSString *classPathEntry = [classPathEntries objectAtIndex:i];
-        if (i > 0) {
-            [classPath appendString:@":"];
+    for (NSString *file in javaDirectoryContents) {
+        if ([file hasSuffix:@".jar"]) {
+            [classPath appendFormat:@":%@/%@", javaPath, file];
         }
-
-        [classPath appendFormat:@"%@/%@", mainBundlePath, classPathEntry];
     }
-
-    NSLog(@"classPath = %@", classPath);
 
     // Set the library path
     NSString *libraryPath = [NSString stringWithFormat:@"-Djava.library.path=%@/Contents/MacOS", mainBundlePath];
