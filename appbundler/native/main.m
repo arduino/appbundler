@@ -52,7 +52,7 @@ typedef int (JNICALL *JLI_Launch_t)(int argc, char ** argv,
                                     jint ergo);
 
 int launch(char *);
-int jli_launch(char *, NSURL *, NSString *, NSString *, NSString *, NSArray *, NSArray *);
+int jli_launch(char *, NSString *, NSString *, NSString *, NSString *, NSArray *, NSArray *);
 
 int main(int argc, char *argv[]) {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -74,30 +74,18 @@ int main(int argc, char *argv[]) {
 int launch(char *commandName) {
     // Get the main bundle
     NSBundle *mainBundle = [NSBundle mainBundle];
-    NSDictionary *infoDictionary = [mainBundle infoDictionary];
 
-    // Set the working directory to the bundle root
+    // Set the working directory to the main bundle root
     NSString *mainBundlePath = [mainBundle bundlePath];
     if (chdir([mainBundlePath UTF8String]) == -1) {
         [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not set initial working directory."];
     }
 
-    // Get the path to the Java directory
-    NSString *javaPath = [mainBundlePath stringByAppendingString:@"/Contents/Java"];
+    // Get the main bundle's info dictionary
+    NSDictionary *infoDictionary = [mainBundle infoDictionary];
 
-    // Get the runtime bundle URL
+    // Get the runtime
     NSString *runtime = [infoDictionary objectForKey:@JVM_RUNTIME_KEY];
-    NSURL *runtimeBundleURL;
-    if (runtime != nil) {
-        runtimeBundleURL = [[mainBundle builtInPlugInsURL] URLByAppendingPathComponent:runtime];
-    } else {
-        runtimeBundleURL = [NSURL fileURLWithPath:@"/Library/Internet Plug-Ins/JavaAppletPlugin.plugin"
-                                      isDirectory:YES];
-    }
-
-    if (runtimeBundleURL == nil) {
-        [NSException raise:@JAVA_LAUNCH_ERROR format:@"Unable to locate a JRE."];
-    }
 
     // Get the main class name
     NSString *mainClassName = [infoDictionary objectForKey:@JVM_MAIN_CLASS_NAME_KEY];
@@ -107,6 +95,7 @@ int launch(char *commandName) {
 
     // Set the class path
     NSString *classPathFormat = @"-Djava.class.path=%@/Classes";
+    NSString *javaPath = [mainBundlePath stringByAppendingString:@"/Contents/Java"];
     NSMutableString *classPath = [[NSString stringWithFormat:classPathFormat, javaPath] mutableCopy];
 
     NSFileManager *defaultFileManager = [NSFileManager defaultManager];
@@ -137,26 +126,34 @@ int launch(char *commandName) {
         arguments = [NSArray array];
     }
 
-    return jli_launch(commandName, runtimeBundleURL,
+    return jli_launch(commandName, runtime,
                       mainClassName, classPath, libraryPath,
                       options, arguments);
 }
 
-int jli_launch(char *commandName, NSURL *runtimeBundleURL,
+int jli_launch(char *commandName, NSString *runtime,
                NSString *mainClassName, NSString *classPath, NSString *libraryPath,
                NSArray *options, NSArray *arguments) {
-    // Load the runtime bundle
-    CFBundleRef runtimeBundle = CFBundleCreate(NULL, (CFURLRef)runtimeBundleURL);
+    // Locate the JLI_Launch() function
+    JLI_Launch_t jli_LaunchFxnPtr;
+    if (runtime != nil) {
+        NSURL *runtimeBundleURL = [[[NSBundle mainBundle] builtInPlugInsURL] URLByAppendingPathComponent:runtime];
+        CFBundleRef runtimeBundle = CFBundleCreate(NULL, (CFURLRef)runtimeBundleURL);
 
-    NSError *bundleLoadError = nil;
-    Boolean runtimeBundleLoaded = CFBundleLoadExecutableAndReturnError(runtimeBundle, (CFErrorRef *)&bundleLoadError);
-    if (bundleLoadError != nil || !runtimeBundleLoaded) {
-        [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not load JRE from %@.", bundleLoadError];
+        NSError *bundleLoadError = nil;
+        Boolean runtimeBundleLoaded = CFBundleLoadExecutableAndReturnError(runtimeBundle, (CFErrorRef *)&bundleLoadError);
+        if (bundleLoadError != nil || !runtimeBundleLoaded) {
+            [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not load JRE from %@.", bundleLoadError];
+        }
+
+        jli_LaunchFxnPtr = CFBundleGetFunctionPointerForName(runtimeBundle, CFSTR("JLI_Launch"));
+    } else {
+        // TODO dlopen() the shared library and use dlsym() to get the function pointer
+        // @"/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/jli/libjli.dylib"
+        jli_LaunchFxnPtr = NULL;
     }
 
-    // Get the JLI_Launch() function pointer
-    JLI_Launch_t JLI_LaunchFxnPtr = CFBundleGetFunctionPointerForName(runtimeBundle, CFSTR("JLI_Launch"));
-    if (JLI_LaunchFxnPtr == NULL) {
+    if (jli_LaunchFxnPtr == NULL) {
         [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not get function pointer for JLI_Launch."];
     }
 
@@ -180,7 +177,7 @@ int jli_launch(char *commandName, NSURL *runtimeBundleURL,
     }
 
     // Invoke JLI_Launch()
-    return JLI_LaunchFxnPtr(argc, argv,
+    return jli_LaunchFxnPtr(argc, argv,
                             0, NULL,
                             0, NULL,
                             FULL_VERSION,
