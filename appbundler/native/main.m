@@ -25,6 +25,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#include <dlfcn.h>
 #include <jni.h>
 
 #define JAVA_LAUNCH_ERROR "JavaLaunchError"
@@ -33,6 +34,8 @@
 #define JVM_MAIN_CLASS_NAME_KEY "JVMMainClassName"
 #define JVM_OPTIONS_KEY "JVMOptions"
 #define JVM_ARGUMENTS_KEY "JVMArguments"
+
+#define LIBJLI_DYLIB "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/jli/libjli.dylib"
 
 // TODO Remove these; they are defined by the makefile
 #define FULL_VERSION "1.7.0"
@@ -99,9 +102,10 @@ int launch(char *commandName) {
 
         jli_LaunchFxnPtr = CFBundleGetFunctionPointerForName(runtimeBundle, CFSTR("JLI_Launch"));
     } else {
-        // TODO dlopen() the shared library and use dlsym() to get the function pointer
-        // @"/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/jli/libjli.dylib"
-        jli_LaunchFxnPtr = NULL;
+        void *libJLI = dlopen(LIBJLI_DYLIB, RTLD_LAZY);
+        if (libJLI != NULL) {
+            jli_LaunchFxnPtr = dlsym(libJLI, "JLI_Launch");
+        }
     }
 
     if (jli_LaunchFxnPtr == NULL) {
