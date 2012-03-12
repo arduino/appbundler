@@ -139,7 +139,12 @@ public class AppBundlerTask extends Task {
         String[] includedFiles = directoryScanner.getIncludedFiles();
 
         for (int i = 0; i < includedFiles.length; i++) {
-            this.classPath.add(new File(parent, includedFiles[i]));
+            File entry = new File(parent, includedFiles[i]);
+            if (entry.isDirectory()) {
+                throw new BuildException("Class path entry cannot be a directory.");
+            }
+
+            this.classPath.add(entry);
         }
     }
 
@@ -259,24 +264,11 @@ public class AppBundlerTask extends Task {
             File javaDirectory = new File(contentsDirectory, "Java");
             javaDirectory.mkdir();
 
-            File classesDirectory = new File(javaDirectory, "Classes");
-            classesDirectory.mkdir();
-
             File plugInsDirectory = new File(contentsDirectory, "PlugIns");
             plugInsDirectory.mkdir();
 
             File resourcesDirectory = new File(contentsDirectory, "Resources");
             resourcesDirectory.mkdir();
-
-            // Generate Info.plist
-            File infoPlistFile = new File(contentsDirectory, "Info.plist");
-            infoPlistFile.createNewFile();
-            writeInfoPlist(infoPlistFile);
-
-            // Generate PkgInfo
-            File pkgInfoFile = new File(contentsDirectory, "PkgInfo");
-            pkgInfoFile.createNewFile();
-            writePkgInfo(pkgInfoFile);
 
             // Copy executable to MacOS folder
             File executableFile = new File(macOSDirectory, EXECUTABLE_NAME);
@@ -291,19 +283,24 @@ public class AppBundlerTask extends Task {
 
             // Copy class path entries to Java folder
             for (File entry : classPath) {
-                String name = entry.getName();
-
-                if (entry.isDirectory() || name.endsWith(CLASS_EXTENSION)) {
-                    copy(entry, new File(classesDirectory, name));
-                } else {
-                    copy(entry, new File(javaDirectory, name));
-                }
+                // TODO Don't copy if in JRE
+                copy(entry, new File(javaDirectory, entry.getName()));
             }
 
-            // Copy native libraries to Java folder
+            // Copy native libraries to MacOS folder
             for (File nativeLibrary : nativeLibraries) {
-                copy(nativeLibrary, new File(javaDirectory, nativeLibrary.getName()));
+                copy(nativeLibrary, new File(macOSDirectory, nativeLibrary.getName()));
             }
+
+            // Generate Info.plist
+            File infoPlistFile = new File(contentsDirectory, "Info.plist");
+            infoPlistFile.createNewFile();
+            writeInfoPlist(infoPlistFile);
+
+            // Generate PkgInfo
+            File pkgInfoFile = new File(contentsDirectory, "PkgInfo");
+            pkgInfoFile.createNewFile();
+            writePkgInfo(pkgInfoFile);
 
             // Copy icon to Resources folder
             if (icon == null) {
@@ -362,6 +359,20 @@ public class AppBundlerTask extends Task {
 
             // Write main class name
             writeProperty(xout, "JVMMainClassName", mainClassName);
+
+            // Write class path
+            writeKey(xout, "JVMClassPath");
+
+            xout.writeStartElement(ARRAY_TAG);
+            xout.writeCharacters("\n");
+
+            for (File entry : classPath) {
+                // TODO Write appropriate path based on location
+                writeString(xout, "Contents/Java/" + entry.getName());
+            }
+
+            xout.writeEndElement();
+            xout.writeCharacters("\n");
 
             // Write options
             writeKey(xout, "JVMOptions");

@@ -89,8 +89,7 @@ questions.
 
     <!-- Clean target -->
     <target name="clean">
-        <delete dir="${ant.project.name}/${folder.classes}"/>
-        <delete file="${ant.project.name}/${folder.bin}/${ant.project.name}-${version}.jar"/>
+        <delete dir="${ant.project.name}/${folder.bin}"/>
         <delete dir="HelloWorld.app"/>
         <delete dir="SwingSet2.app"/>
         <delete dir="SwingSet2Plugin.app"/>
@@ -98,10 +97,7 @@ questions.
 
     <!-- Package target -->
     <target name="package" depends="compile">
-        <property name="destfile" value="${ant.project.name}/${folder.bin}/${ant.project.name}-${version}.jar"/>
-
-        <delete file="${destfile}"/>
-        <jar destfile="${destfile}" index="true">
+        <jar destfile="${ant.project.name}/${folder.bin}/${ant.project.name}-${version}.jar" index="true">
             <manifest>
                 <attribute name="Implementation-Vendor-Id" value="com.oracle"/>
                 <attribute name="Implementation-Vendor" value="Oracle"/>
