@@ -52,7 +52,6 @@ typedef int (JNICALL *JLI_Launch_t)(int argc, char ** argv,
                                     jint ergo);
 
 int launch(char *);
-int jli_launch(char *, NSString *, NSString *, NSString *, NSString *, NSArray *, NSArray *);
 
 int main(int argc, char *argv[]) {
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
@@ -84,8 +83,30 @@ int launch(char *commandName) {
     // Get the main bundle's info dictionary
     NSDictionary *infoDictionary = [mainBundle infoDictionary];
 
-    // Get the runtime
+    // Locate the JLI_Launch() function
     NSString *runtime = [infoDictionary objectForKey:@JVM_RUNTIME_KEY];
+
+    JLI_Launch_t jli_LaunchFxnPtr;
+    if (runtime != nil) {
+        NSURL *runtimeBundleURL = [[[NSBundle mainBundle] builtInPlugInsURL] URLByAppendingPathComponent:runtime];
+        CFBundleRef runtimeBundle = CFBundleCreate(NULL, (CFURLRef)runtimeBundleURL);
+
+        NSError *bundleLoadError = nil;
+        Boolean runtimeBundleLoaded = CFBundleLoadExecutableAndReturnError(runtimeBundle, (CFErrorRef *)&bundleLoadError);
+        if (bundleLoadError != nil || !runtimeBundleLoaded) {
+            [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not load JRE from %@.", bundleLoadError];
+        }
+
+        jli_LaunchFxnPtr = CFBundleGetFunctionPointerForName(runtimeBundle, CFSTR("JLI_Launch"));
+    } else {
+        // TODO dlopen() the shared library and use dlsym() to get the function pointer
+        // @"/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/jli/libjli.dylib"
+        jli_LaunchFxnPtr = NULL;
+    }
+
+    if (jli_LaunchFxnPtr == NULL) {
+        [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not get function pointer for JLI_Launch."];
+    }
 
     // Get the main class name
     NSString *mainClassName = [infoDictionary objectForKey:@JVM_MAIN_CLASS_NAME_KEY];
@@ -124,37 +145,6 @@ int launch(char *commandName) {
     NSArray *arguments = [infoDictionary objectForKey:@JVM_ARGUMENTS_KEY];
     if (arguments == nil) {
         arguments = [NSArray array];
-    }
-
-    return jli_launch(commandName, runtime,
-                      mainClassName, classPath, libraryPath,
-                      options, arguments);
-}
-
-int jli_launch(char *commandName, NSString *runtime,
-               NSString *mainClassName, NSString *classPath, NSString *libraryPath,
-               NSArray *options, NSArray *arguments) {
-    // Locate the JLI_Launch() function
-    JLI_Launch_t jli_LaunchFxnPtr;
-    if (runtime != nil) {
-        NSURL *runtimeBundleURL = [[[NSBundle mainBundle] builtInPlugInsURL] URLByAppendingPathComponent:runtime];
-        CFBundleRef runtimeBundle = CFBundleCreate(NULL, (CFURLRef)runtimeBundleURL);
-
-        NSError *bundleLoadError = nil;
-        Boolean runtimeBundleLoaded = CFBundleLoadExecutableAndReturnError(runtimeBundle, (CFErrorRef *)&bundleLoadError);
-        if (bundleLoadError != nil || !runtimeBundleLoaded) {
-            [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not load JRE from %@.", bundleLoadError];
-        }
-
-        jli_LaunchFxnPtr = CFBundleGetFunctionPointerForName(runtimeBundle, CFSTR("JLI_Launch"));
-    } else {
-        // TODO dlopen() the shared library and use dlsym() to get the function pointer
-        // @"/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/jli/libjli.dylib"
-        jli_LaunchFxnPtr = NULL;
-    }
-
-    if (jli_LaunchFxnPtr == NULL) {
-        [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not get function pointer for JLI_Launch."];
     }
 
     // Initialize the arguments to JLI_Launch()
