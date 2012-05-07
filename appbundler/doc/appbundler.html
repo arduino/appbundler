@@ -98,9 +98,9 @@ questions.
     <td valign="top">The Java runtime to embed in the bundle.
     Corresponds to the <code>JVMRuntime</code> key in the <tt>Info.plist</tt> file.
     If specified, the contents of this directory will be copied to the <tt>Contents/PlugIns/</tt>
-    folder of the generated bundle.</td>
-    <td align="center" valign="top">No; if unspecified, the target system must have a shared JRE
+    folder of the generated bundle. If unspecified, the target system must have a shared JRE
     installed in <tt>/Library/Internet Plug-Ins/JavaAppletPlugin.plugin</tt>.</td>
+    <td align="center" valign="top">No</tt></td>
   </tr>
   <tr>
     <td valign="top">mainclassname</td>
@@ -111,27 +111,28 @@ questions.
   </tr>
   <tr>
     <td valign="top">classpath</td>
-    <td valign="top">The classpath of the bundled application. If an entry refers to a directory,
-    it will be recursively copied to the <tt>Contents/Java/Classes/</tt> folder of the generated
-    bundle. Otherwise, the entryt will be copied to the <tt>Contents/Java/</tt> folder of the
-    generated bundle.</td>
+    <td valign="top">The class path of the bundled application.
+    Corresponds to the <tt>java.class.path</tt> system property.
+    If an entry refers to a directory, it will be recursively copied to the
+    <tt>Contents/Java/Classes/</tt> folder of the generated bundle. Otherwise, the entry will be
+    copied to the <tt>Contents/Java/</tt> folder of the generated bundle.</td>
     <td align="center" valign="top">Yes, unless nested <code>&lt;classpath&gt;</code> elements are
-    present.</td>
+    present</td>
   </tr>
   <tr>
-    <td valign="top">nativelibraries</td>
-    <td valign="top">Any native libraries required by the bundled application. Entries will be
-    copied to the <tt>Contents/Java/</tt> folder of the generated bundle.</td>
-    <td align="center" valign="top">Yes, unless nested <code>&lt;nativelibraries&gt;</code> elements are
-    present.</td>
+    <td valign="top">librarypath</td>
+    <td valign="top">The library path of the bundled application.
+    Corresponds to the <tt>java.library.path</tt> system property.
+    Entries will be copied to the <tt>Contents/MacOS/</tt> folder of the generated bundle.</td>
+    <td align="center" valign="top">No</td>
   </tr>
 </table>
 
 <h3>Parameters specified as nested elements</h3>
 <h4>classpath</h4>
-<p>The <code>classpath</code> and <code>nativelibraries</code> attributes are
+<p>The <code>classpath</code> and <code>librarypath</code> attributes are
 <a href="http://ant.apache.org/manual/using.html#path">path-like structures</a> that can also be
-set via nested <code>&lt;classpath&gt;</code> and <code>&lt;nativelibraries&gt;</code> elements,
+set via nested <code>&lt;classpath&gt;</code> and <code>&lt;librarypath&gt;</code> elements,
 respectively.</p>
 
 <h4>option</h4>

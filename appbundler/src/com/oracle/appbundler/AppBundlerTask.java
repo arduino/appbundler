@@ -69,24 +69,23 @@ public class AppBundlerTask extends Task {
     private File runtime = null;
     private String mainClassName = null;
     private ArrayList<File> classPath = new ArrayList<>();
-    private ArrayList<File> nativeLibraries = new ArrayList<>();
+    private ArrayList<File> libraryPath = new ArrayList<>();
     private ArrayList<String> options = new ArrayList<>();
     private ArrayList<String> arguments = new ArrayList<>();
 
-    public static final String EXECUTABLE_NAME = "JavaAppLauncher";
-    public static final String DEFAULT_ICON_NAME = "GenericApp.icns";
-    public static final String OS_TYPE_CODE = "APPL";
-    public static final String CLASS_EXTENSION = ".class";
+    private static final String EXECUTABLE_NAME = "JavaAppLauncher";
+    private static final String DEFAULT_ICON_NAME = "GenericApp.icns";
+    private static final String OS_TYPE_CODE = "APPL";
 
-    public static final String PLIST_DTD = "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">";
-    public static final String PLIST_TAG = "plist";
-    public static final String PLIST_VERSION_ATTRIBUTE = "version";
-    public static final String DICT_TAG = "dict";
-    public static final String KEY_TAG = "key";
-    public static final String ARRAY_TAG = "array";
-    public static final String STRING_TAG = "string";
+    private static final String PLIST_DTD = "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">";
+    private static final String PLIST_TAG = "plist";
+    private static final String PLIST_VERSION_ATTRIBUTE = "version";
+    private static final String DICT_TAG = "dict";
+    private static final String KEY_TAG = "key";
+    private static final String ARRAY_TAG = "array";
+    private static final String STRING_TAG = "string";
 
-    public static final int BUFFER_SIZE = 1024;
+    private static final int BUFFER_SIZE = 1024;
 
     public void setOutputDirectory(File outputDirectory) {
         this.outputDirectory = outputDirectory;
@@ -143,12 +142,15 @@ public class AppBundlerTask extends Task {
         }
     }
 
-    public void addNativeLibrary(File nativeLibrary) throws BuildException {
-        if (nativeLibrary.isDirectory()) {
-            throw new BuildException("Native library cannot be a directory.");
-        }
+    public void addConfiguredLibraryPath(FileSet libraryPath) throws BuildException {
+        File parent = libraryPath.getDir();
 
-        nativeLibraries.add(nativeLibrary);
+        DirectoryScanner directoryScanner = libraryPath.getDirectoryScanner(getProject());
+        String[] includedFiles = directoryScanner.getIncludedFiles();
+
+        for (int i = 0; i < includedFiles.length; i++) {
+            this.libraryPath.add(new File(parent, includedFiles[i]));
+        }
     }
 
     public void addConfiguredOption(Option option) throws BuildException {
@@ -291,18 +293,16 @@ public class AppBundlerTask extends Task {
 
             // Copy class path entries to Java folder
             for (File entry : classPath) {
-                String name = entry.getName();
-
-                if (entry.isDirectory() || name.endsWith(CLASS_EXTENSION)) {
-                    copy(entry, new File(classesDirectory, name));
+                if (entry.isDirectory()) {
+                    copy(entry, new File(classesDirectory, entry.getName()));
                 } else {
-                    copy(entry, new File(javaDirectory, name));
+                    copy(entry, new File(javaDirectory, entry.getName()));
                 }
             }
 
-            // Copy native libraries to Java folder
-            for (File nativeLibrary : nativeLibraries) {
-                copy(nativeLibrary, new File(macOSDirectory, nativeLibrary.getName()));
+            // Copy native libraries to MacOS folder
+            for (File entry : libraryPath) {
+                copy(entry, new File(macOSDirectory, entry.getName()));
             }
 
             // Copy icon to Resources folder
