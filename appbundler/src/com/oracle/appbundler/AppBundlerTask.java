@@ -175,15 +175,15 @@ public class AppBundlerTask extends Task {
     public void execute() throws BuildException {
         // Validate required properties
         if (outputDirectory == null) {
-            throw new IllegalStateException("Destination directory is required.");
+            throw new IllegalStateException("Output directory is required.");
         }
 
         if (!outputDirectory.exists()) {
-            throw new IllegalStateException("Destination directory does not exist.");
+            throw new IllegalStateException("Output directory does not exist.");
         }
 
         if (!outputDirectory.isDirectory()) {
-            throw new IllegalStateException("Invalid destination directory.");
+            throw new IllegalStateException("Invalid output directory.");
         }
 
         if (name == null) {
