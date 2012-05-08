@@ -37,11 +37,6 @@
 
 #define LIBJLI_DYLIB "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/jli/libjli.dylib"
 
-// TODO Remove these; they are defined by the makefile
-#define FULL_VERSION "1.7.0"
-#define DOT_VERSION "1.7.0"
-#define DEFAULT_POLICY 0
-
 typedef int (JNICALL *JLI_Launch_t)(int argc, char ** argv,
                                     int jargc, const char** jargv,
                                     int appclassc, const char** appclassv,
@@ -172,12 +167,12 @@ int launch(char *commandName) {
     return jli_LaunchFxnPtr(argc, argv,
                             0, NULL,
                             0, NULL,
-                            FULL_VERSION,
-                            DOT_VERSION,
+                            "",
+                            "",
                             "java",
                             "java",
                             FALSE,
                             FALSE,
                             FALSE,
-                            DEFAULT_POLICY);
+                            0);
 }
