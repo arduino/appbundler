@@ -129,12 +129,10 @@ public class AppBundlerTask extends Task {
         this.runtime = runtime;
 
         runtime.appendExcludes(new String[] {
-            "Contents/MacOS/",
-            "Contents/Info.plist",
-            "Contents/Home/bin/",
-            "Contents/Home/jre/bin/",
-            "Contents/Home/man/",
-            "Contents/Home/src.zip"
+            "bin/",
+            "jre/bin/",
+            "man/",
+            "src.zip"
         });
     }
 
@@ -281,13 +279,15 @@ public class AppBundlerTask extends Task {
 
     private void copyRuntime(File plugInsDirectory) throws IOException {
         if (runtime != null) {
-            // Create root directory
-            File runtimeDirectory = runtime.getDir();
+            File runtimeHomeDirectory = runtime.getDir();
+            File runtimeContentsDirectory = runtimeHomeDirectory.getParentFile();
+            File runtimeDirectory = runtimeContentsDirectory.getParentFile();
+
+            // Create root plug-in directory
             File pluginDirectory = new File(plugInsDirectory, runtimeDirectory.getName());
             pluginDirectory.mkdir();
 
             // Create Contents directory
-            File runtimeContentsDirectory = new File(runtimeDirectory, "Contents");
             File pluginContentsDirectory = new File(pluginDirectory, runtimeContentsDirectory.getName());
             pluginContentsDirectory.mkdir();
 
@@ -300,13 +300,15 @@ public class AppBundlerTask extends Task {
             copy(runtimeInfoPlistFile, new File(pluginContentsDirectory, runtimeInfoPlistFile.getName()));
 
             // Copy included contents of Home directory
+            File pluginHomeDirectory = new File(pluginContentsDirectory, runtimeHomeDirectory.getName());
+
             DirectoryScanner directoryScanner = runtime.getDirectoryScanner(getProject());
             String[] includedFiles = directoryScanner.getIncludedFiles();
 
             for (int i = 0; i < includedFiles.length; i++) {
                 String includedFile = includedFiles[i];
-                File source = new File(runtimeDirectory, includedFile);
-                File destination = new File(pluginDirectory, includedFile);
+                File source = new File(runtimeHomeDirectory, includedFile);
+                File destination = new File(pluginHomeDirectory, includedFile);
                 copy(source, destination);
             }
         }
@@ -390,7 +392,7 @@ public class AppBundlerTask extends Task {
 
             // Write runtime
             if (runtime != null) {
-                writeProperty(xout, "JVMRuntime", runtime.getDir().getName());
+                writeProperty(xout, "JVMRuntime", runtime.getDir().getParentFile().getParentFile().getName());
             }
 
             // Write main class name
