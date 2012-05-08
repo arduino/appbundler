@@ -66,8 +66,8 @@ public class AppBundlerTask extends Task {
     private String copyright = "";
 
     // JVM info properties
-    private File runtime = null;
     private String mainClassName = null;
+    private FileSet runtime = null;
     private ArrayList<File> classPath = new ArrayList<>();
     private ArrayList<File> libraryPath = new ArrayList<>();
     private ArrayList<String> options = new ArrayList<>();
@@ -84,8 +84,6 @@ public class AppBundlerTask extends Task {
     private static final String KEY_TAG = "key";
     private static final String ARRAY_TAG = "array";
     private static final String STRING_TAG = "string";
-
-    private static final int BUFFER_SIZE = 1024;
 
     public void setOutputDirectory(File outputDirectory) {
         this.outputDirectory = outputDirectory;
@@ -119,16 +117,16 @@ public class AppBundlerTask extends Task {
         this.copyright = copyright;
     }
 
-    public File getRuntime() {
-        return runtime;
-    }
-
-    public void setRuntime(File runtime) {
-        this.runtime = runtime;
-    }
-
     public void setMainClassName(String mainClassName) {
         this.mainClassName = mainClassName;
+    }
+
+    public void addConfiguredRuntime(FileSet runtime) throws BuildException {
+        if (this.runtime != null) {
+            throw new BuildException("Runtime already specified.");
+        }
+
+        this.runtime = runtime;
     }
 
     public void addConfiguredClassPath(FileSet classPath) {
@@ -142,7 +140,7 @@ public class AppBundlerTask extends Task {
         }
     }
 
-    public void addConfiguredLibraryPath(FileSet libraryPath) throws BuildException {
+    public void addConfiguredLibraryPath(FileSet libraryPath) {
         File parent = libraryPath.getDir();
 
         DirectoryScanner directoryScanner = libraryPath.getDirectoryScanner(getProject());
@@ -226,16 +224,6 @@ public class AppBundlerTask extends Task {
             throw new IllegalStateException("Copyright is required.");
         }
 
-        if (runtime != null) {
-            if (!runtime.exists()) {
-                throw new IllegalStateException("Runtime does not exist.");
-            }
-
-            if (!runtime.isDirectory()) {
-                throw new IllegalStateException("Invalid runtime.");
-            }
-        }
-
         if (mainClassName == null) {
             throw new IllegalStateException("Main class name is required.");
         }
@@ -288,7 +276,31 @@ public class AppBundlerTask extends Task {
 
             // Copy runtime to PlugIns folder (if specified)
             if (runtime != null) {
-                copy(runtime, new File(plugInsDirectory, runtime.getName()));
+                // Create root directory
+                File runtimeDirectory = runtime.getDir();
+                File pluginDirectory = new File(plugInsDirectory, runtimeDirectory.getName());
+                pluginDirectory.mkdir();
+
+                // Create Contents directory
+                File runtimeContentsDirectory = new File(runtimeDirectory, "Contents");
+                File pluginContentsDirectory = new File(pluginDirectory, runtimeContentsDirectory.getName());
+                pluginContentsDirectory.mkdir();
+
+                // Copy MacOS directory
+                File runtimeMacOSDirectory = new File(runtimeContentsDirectory, "MacOS");
+                copy(runtimeMacOSDirectory, new File(pluginContentsDirectory, runtimeMacOSDirectory.getName()));
+
+                // Copy Info.plist file
+                File runtimeInfoPlistFile = new File(runtimeContentsDirectory, "Info.plist");
+                copy(runtimeInfoPlistFile, new File(pluginContentsDirectory, runtimeInfoPlistFile.getName()));
+
+                // Copy included contents of Home directory
+                DirectoryScanner directoryScanner = runtime.getDirectoryScanner(getProject());
+                String[] includedFiles = directoryScanner.getIncludedFiles();
+
+                for (int i = 0; i < includedFiles.length; i++) {
+                    copy(new File(runtimeDirectory, includedFiles[i]), new File(pluginDirectory, includedFiles[i]));
+                }
             }
 
             // Copy class path entries to Java folder
@@ -357,7 +369,7 @@ public class AppBundlerTask extends Task {
 
             // Write runtime
             if (runtime != null) {
-                writeProperty(xout, "JVMRuntime", runtime.getName());
+                writeProperty(xout, "JVMRuntime", runtime.getDir().getName());
             }
 
             // Write main class name
@@ -464,6 +476,8 @@ public class AppBundlerTask extends Task {
     private static void copy(File source, File destination) throws IOException {
         Path sourcePath = source.toPath();
         Path destinationPath = destination.toPath();
+
+        destination.getParentFile().mkdirs();
 
         Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING, LinkOption.NOFOLLOW_LINKS);
 
