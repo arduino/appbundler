@@ -123,8 +123,8 @@ questions.
             displayname="Hello World Test"
             identifier="com.oracle.appbundler.Test"
             shortversion="1.0"
-            runtime="${env.JAVA_HOME}/../.."
             mainclassname="Test">
+            <runtime dir="${env.JAVA_HOME}/../.."/>
             <classpath dir="${ant.project.name}/${folder.classes}" includes="Test.class"/>
             <option value="-Xms32M"/>
             <option value="-Xmx256M"/>
@@ -141,8 +141,18 @@ questions.
             displayname="SwingSet 2"
             identifier="com.oracle.javax.swing.SwingSet2"
             shortversion="1.0"
-            runtime="${env.JAVA_HOME}/../.."
             mainclassname="SwingSet2">
+            <runtime dir="${env.JAVA_HOME}/../..">
+                <exclude name="Contents/MacOS/"/>
+                <exclude name="Contents/Info.plist"/>
+                <exclude name="Contents/Home/bin/"/>
+                <exclude name="Contents/Home/db/"/>
+                <exclude name="Contents/Home/lib/"/>
+                <exclude name="Contents/Home/jre/bin/"/>
+                <exclude name="Contents/Home/jre/lib/JObjC.jar"/>
+                <exclude name="Contents/Home/man/"/>
+                <exclude name="Contents/Home/src.zip"/>
+            </runtime>
             <classpath file="/Library/Java/Demos/JFC/SwingSet2/SwingSet2.jar"/>
             <option value="-Dapple.laf.useScreenMenuBar=true"/>
         </bundleapp>
