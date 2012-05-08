@@ -68,8 +68,8 @@ public class AppBundlerTask extends Task {
     // JVM info properties
     private String mainClassName = null;
     private FileSet runtime = null;
-    private ArrayList<File> classPath = new ArrayList<>();
-    private ArrayList<File> libraryPath = new ArrayList<>();
+    private ArrayList<FileSet> classPath = new ArrayList<>();
+    private ArrayList<FileSet> libraryPath = new ArrayList<>();
     private ArrayList<String> options = new ArrayList<>();
     private ArrayList<String> arguments = new ArrayList<>();
 
@@ -130,25 +130,11 @@ public class AppBundlerTask extends Task {
     }
 
     public void addConfiguredClassPath(FileSet classPath) {
-        File parent = classPath.getDir();
-
-        DirectoryScanner directoryScanner = classPath.getDirectoryScanner(getProject());
-        String[] includedFiles = directoryScanner.getIncludedFiles();
-
-        for (int i = 0; i < includedFiles.length; i++) {
-            this.classPath.add(new File(parent, includedFiles[i]));
-        }
+        this.classPath.add(classPath);
     }
 
     public void addConfiguredLibraryPath(FileSet libraryPath) {
-        File parent = libraryPath.getDir();
-
-        DirectoryScanner directoryScanner = libraryPath.getDirectoryScanner(getProject());
-        String[] includedFiles = directoryScanner.getIncludedFiles();
-
-        for (int i = 0; i < includedFiles.length; i++) {
-            this.libraryPath.add(new File(parent, includedFiles[i]));
-        }
+        this.libraryPath.add(libraryPath);
     }
 
     public void addConfiguredOption(Option option) throws BuildException {
@@ -249,9 +235,6 @@ public class AppBundlerTask extends Task {
             File javaDirectory = new File(contentsDirectory, "Java");
             javaDirectory.mkdir();
 
-            File classesDirectory = new File(javaDirectory, "Classes");
-            classesDirectory.mkdir();
-
             File plugInsDirectory = new File(contentsDirectory, "PlugIns");
             plugInsDirectory.mkdir();
 
@@ -270,11 +253,11 @@ public class AppBundlerTask extends Task {
 
             // Copy executable to MacOS folder
             File executableFile = new File(macOSDirectory, EXECUTABLE_NAME);
-            copy(getClass().getResource(EXECUTABLE_NAME), executableFile);
+            copy(getClass().getResource(executableFile.getName()), executableFile);
 
             executableFile.setExecutable(true);
 
-            // Copy runtime to PlugIns folder (if specified)
+            // Copy runtime to PlugIns folder
             if (runtime != null) {
                 // Create root directory
                 File runtimeDirectory = runtime.getDir();
@@ -299,28 +282,44 @@ public class AppBundlerTask extends Task {
                 String[] includedFiles = directoryScanner.getIncludedFiles();
 
                 for (int i = 0; i < includedFiles.length; i++) {
-                    copy(new File(runtimeDirectory, includedFiles[i]), new File(pluginDirectory, includedFiles[i]));
+                    String includedFile = includedFiles[i];
+                    File source = new File(runtimeDirectory, includedFile);
+                    File destination = new File(pluginDirectory, includedFile);
+                    copy(source, destination);
                 }
             }
 
             // Copy class path entries to Java folder
-            for (File entry : classPath) {
-                if (entry.isDirectory()) {
-                    copy(entry, new File(classesDirectory, entry.getName()));
-                } else {
-                    copy(entry, new File(javaDirectory, entry.getName()));
+            for (FileSet fileSet : classPath) {
+                File classPathDirectory = fileSet.getDir();
+                DirectoryScanner directoryScanner = fileSet.getDirectoryScanner(getProject());
+                String[] includedFiles = directoryScanner.getIncludedFiles();
+
+                for (int i = 0; i < includedFiles.length; i++) {
+                    String includedFile = includedFiles[i];
+                    File source = new File(classPathDirectory, includedFile);
+                    File destination = new File(javaDirectory, new File(includedFile).getName());
+                    copy(source, destination);
                 }
             }
 
             // Copy native libraries to MacOS folder
-            for (File entry : libraryPath) {
-                copy(entry, new File(macOSDirectory, entry.getName()));
+            for (FileSet fileSet : libraryPath) {
+                File libraryPathDirectory = fileSet.getDir();
+                DirectoryScanner directoryScanner = fileSet.getDirectoryScanner(getProject());
+                String[] includedFiles = directoryScanner.getIncludedFiles();
+
+                for (int i = 0; i < includedFiles.length; i++) {
+                    String includedFile = includedFiles[i];
+                    File source = new File(libraryPathDirectory, includedFile);
+                    File destination = new File(macOSDirectory, new File(includedFile).getName());
+                    copy(source, destination);
+                }
             }
 
             // Copy icon to Resources folder
             if (icon == null) {
-                copy(getClass().getResource(DEFAULT_ICON_NAME), new File(resourcesDirectory,
-                    DEFAULT_ICON_NAME));
+                copy(getClass().getResource(DEFAULT_ICON_NAME), new File(resourcesDirectory, DEFAULT_ICON_NAME));
             } else {
                 copy(icon, new File(resourcesDirectory, icon.getName()));
             }

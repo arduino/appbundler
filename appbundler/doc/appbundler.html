@@ -51,44 +51,44 @@ questions.
   </tr>
   <tr>
     <td valign="top">name</td>
-    <td valign="top">The name of the generated bundle.
+    <td valign="top">The name of the application.
     Corresponds to the <code>CFBundleName</code> key in the <tt>Info.plist</tt> file.</td>
     <td align="center" valign="top">Yes</td>
   </tr>
   <tr>
     <td valign="top">displayname</td>
-    <td valign="top">The display name of the generated bundle.
+    <td valign="top">The display name of the application.
     Corresponds to the <code>CFBundleDisplayName</code> key in the <tt>Info.plist</tt> file.</td>
     <td align="center" valign="top">Yes</td>
   </tr>
   <tr>
     <td valign="top">identifier</td>
-    <td valign="top">An identifier string that specifies the application type of the bundle.
+    <td valign="top">An identifier string that specifies the application type.
     Corresponds to the <code>CFBundleIdentifier</code> key in the <tt>Info.plist</tt> file.</td>
     <td align="center" valign="top">Yes</td>
   </tr>
   <tr>
     <td valign="top">icon</td>
-    <td valign="top">The icon file for the bundle.
+    <td valign="top">The icon file for the application.
     Corresponds to the <code>CFBundleIconFile</code> key in the <tt>Info.plist</tt> file.</td>
     <td align="center" valign="top">No</td>
   </tr>
   <tr>
     <td valign="top">shortversion</td>
-    <td valign="top">The release version number string for the bundle.
+    <td valign="top">The release version number string for the application.
     Corresponds to the <code>CFBundleShortVersionString</code> key in the <tt>Info.plist</tt>
     file.</td>
     <td align="center" valign="top">No</td>
   </tr>
   <tr>
     <td valign="top">signature</td>
-    <td valign="top">The four-letter code identifying the bundle creator.
+    <td valign="top">The four-letter code identifying the application creator.
     Corresponds to the <code>CFBundleSignature</code> key in the <tt>Info.plist</tt> file.</td>
     <td align="center" valign="top">No</td>
   </tr>
   <tr>
     <td valign="top">copyright</td>
-    <td valign="top">The copyright notice for the bundle.
+    <td valign="top">The copyright notice for the application.
     Corresponds to the <code>NSHumanReadableCopyright</code> key in the <tt>Info.plist</tt>
     file.</td>
     <td align="center" valign="top">No</td>
@@ -105,22 +105,23 @@ questions.
 <h3>Parameters specified as nested elements</h3>
 <h4>runtime</h4>
 <p>A <a href="http://ant.apache.org/manual/Types/fileset.html">fileset</a> representing the Java
-runtime to embed in the bundle. Corresponds to the <code>JVMRuntime</code> key in the
+runtime to embed in the application. Corresponds to the <code>JVMRuntime</code> key in the
 <tt>Info.plist</tt> file. If specified, the contents of this directory will be copied to the
 <tt>Contents/PlugIns/</tt> folder of the generated bundle. If unspecified, the target system must
-have a shared JRE installed in <tt>/Library/Internet Plug-Ins/JavaAppletPlugin.plugin</tt>.</p>
+have a shared JRE installed in <tt>/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/</tt>.</p>
+<p>This element is optional.</p>
 
 <h4>classpath</h4>
 <p>A <a href="http://ant.apache.org/manual/Types/fileset.html">fileset</a> representing the class
-path of the bundled application. Corresponds to the <tt>java.class.path</tt> system property. If
-an entry refers to a directory, it will be recursively copied to the <tt>Contents/Java/Classes/</tt>
-folder of the generated bundle. Otherwise, the entry will be copied to the <tt>Contents/Java/</tt>
-folder of the generated bundle.</p>
+path of the bundled application. Corresponds to the <tt>java.class.path</tt> system property.
+Entries will be copied to the <tt>Contents/Java/</tt> folder of the generated bundle.</p>
+<p>This element is required.</p>
 
 <h4>librarypath</h4>
 <p>A <a href="http://ant.apache.org/manual/Types/fileset.html">fileset</a> representing the library
 path of the bundled application. Corresponds to the <tt>java.library.path</tt> system property.
 Entries will be copied to the <tt>Contents/MacOS/</tt> folder of the generated bundle.</p>
+<p>This element is optional.</p>
 
 <h4>option</h4>
 <p>Specifies a command-line option to be passed to the JVM at startup.</p>
@@ -138,7 +139,7 @@ Entries will be copied to the <tt>Contents/MacOS/</tt> folder of the generated b
 </table>
 
 <h4>argument</h4>
-<p>Specifies a command-line argument to be passed to the application at startup.</p>
+<p>Specifies a command-line argument to be passed to the bundled application at startup.</p>
 <table border="1" cellpadding="2" cellspacing="0">
   <tr>
     <td valign="top"><b>Attribute</b></td>
