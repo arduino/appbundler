@@ -127,6 +127,8 @@ public class AppBundlerTask extends Task {
         }
 
         this.runtime = runtime;
+
+        // TODO Add default excludes
     }
 
     public void addConfiguredClassPath(FileSet classPath) {
@@ -214,14 +216,11 @@ public class AppBundlerTask extends Task {
             throw new IllegalStateException("Main class name is required.");
         }
 
-        if (classPath.isEmpty()) {
-            throw new IllegalStateException("Class path is required.");
-        }
-
-        // Create directory structure
+        // Create the app bundle
         try {
             System.out.println("Creating app bundle: " + name);
 
+            // Create directory structure
             File rootDirectory = new File(outputDirectory, name + ".app");
             delete(rootDirectory);
             rootDirectory.mkdir();
@@ -258,73 +257,89 @@ public class AppBundlerTask extends Task {
             executableFile.setExecutable(true);
 
             // Copy runtime to PlugIns folder
-            if (runtime != null) {
-                // Create root directory
-                File runtimeDirectory = runtime.getDir();
-                File pluginDirectory = new File(plugInsDirectory, runtimeDirectory.getName());
-                pluginDirectory.mkdir();
-
-                // Create Contents directory
-                File runtimeContentsDirectory = new File(runtimeDirectory, "Contents");
-                File pluginContentsDirectory = new File(pluginDirectory, runtimeContentsDirectory.getName());
-                pluginContentsDirectory.mkdir();
-
-                // Copy MacOS directory
-                File runtimeMacOSDirectory = new File(runtimeContentsDirectory, "MacOS");
-                copy(runtimeMacOSDirectory, new File(pluginContentsDirectory, runtimeMacOSDirectory.getName()));
-
-                // Copy Info.plist file
-                File runtimeInfoPlistFile = new File(runtimeContentsDirectory, "Info.plist");
-                copy(runtimeInfoPlistFile, new File(pluginContentsDirectory, runtimeInfoPlistFile.getName()));
-
-                // Copy included contents of Home directory
-                DirectoryScanner directoryScanner = runtime.getDirectoryScanner(getProject());
-                String[] includedFiles = directoryScanner.getIncludedFiles();
-
-                for (int i = 0; i < includedFiles.length; i++) {
-                    String includedFile = includedFiles[i];
-                    File source = new File(runtimeDirectory, includedFile);
-                    File destination = new File(pluginDirectory, includedFile);
-                    copy(source, destination);
-                }
-            }
+            copyRuntime(plugInsDirectory);
 
             // Copy class path entries to Java folder
-            for (FileSet fileSet : classPath) {
-                File classPathDirectory = fileSet.getDir();
-                DirectoryScanner directoryScanner = fileSet.getDirectoryScanner(getProject());
-                String[] includedFiles = directoryScanner.getIncludedFiles();
+            copyClassPathEntries(javaDirectory);
 
-                for (int i = 0; i < includedFiles.length; i++) {
-                    String includedFile = includedFiles[i];
-                    File source = new File(classPathDirectory, includedFile);
-                    File destination = new File(javaDirectory, new File(includedFile).getName());
-                    copy(source, destination);
-                }
-            }
-
-            // Copy native libraries to MacOS folder
-            for (FileSet fileSet : libraryPath) {
-                File libraryPathDirectory = fileSet.getDir();
-                DirectoryScanner directoryScanner = fileSet.getDirectoryScanner(getProject());
-                String[] includedFiles = directoryScanner.getIncludedFiles();
-
-                for (int i = 0; i < includedFiles.length; i++) {
-                    String includedFile = includedFiles[i];
-                    File source = new File(libraryPathDirectory, includedFile);
-                    File destination = new File(macOSDirectory, new File(includedFile).getName());
-                    copy(source, destination);
-                }
-            }
+            // Copy library path entries to MacOS folder
+            copyLibraryPathEntries(macOSDirectory);
 
             // Copy icon to Resources folder
-            if (icon == null) {
-                copy(getClass().getResource(DEFAULT_ICON_NAME), new File(resourcesDirectory, DEFAULT_ICON_NAME));
-            } else {
-                copy(icon, new File(resourcesDirectory, icon.getName()));
-            }
+            copyIcon(resourcesDirectory);
         } catch (IOException exception) {
             throw new BuildException(exception);
+        }
+    }
+
+    private void copyRuntime(File plugInsDirectory) throws IOException {
+        if (runtime != null) {
+            // Create root directory
+            File runtimeDirectory = runtime.getDir();
+            File pluginDirectory = new File(plugInsDirectory, runtimeDirectory.getName());
+            pluginDirectory.mkdir();
+
+            // Create Contents directory
+            File runtimeContentsDirectory = new File(runtimeDirectory, "Contents");
+            File pluginContentsDirectory = new File(pluginDirectory, runtimeContentsDirectory.getName());
+            pluginContentsDirectory.mkdir();
+
+            // Copy MacOS directory
+            File runtimeMacOSDirectory = new File(runtimeContentsDirectory, "MacOS");
+            copy(runtimeMacOSDirectory, new File(pluginContentsDirectory, runtimeMacOSDirectory.getName()));
+
+            // Copy Info.plist file
+            File runtimeInfoPlistFile = new File(runtimeContentsDirectory, "Info.plist");
+            copy(runtimeInfoPlistFile, new File(pluginContentsDirectory, runtimeInfoPlistFile.getName()));
+
+            // Copy included contents of Home directory
+            DirectoryScanner directoryScanner = runtime.getDirectoryScanner(getProject());
+            String[] includedFiles = directoryScanner.getIncludedFiles();
+
+            for (int i = 0; i < includedFiles.length; i++) {
+                String includedFile = includedFiles[i];
+                File source = new File(runtimeDirectory, includedFile);
+                File destination = new File(pluginDirectory, includedFile);
+                copy(source, destination);
+            }
+        }
+    }
+
+    private void copyClassPathEntries(File javaDirectory) throws IOException {
+        for (FileSet fileSet : classPath) {
+            File classPathDirectory = fileSet.getDir();
+            DirectoryScanner directoryScanner = fileSet.getDirectoryScanner(getProject());
+            String[] includedFiles = directoryScanner.getIncludedFiles();
+
+            for (int i = 0; i < includedFiles.length; i++) {
+                String includedFile = includedFiles[i];
+                File source = new File(classPathDirectory, includedFile);
+                File destination = new File(javaDirectory, new File(includedFile).getName());
+                copy(source, destination);
+            }
+        }
+    }
+
+    private void copyLibraryPathEntries(File macOSDirectory) throws IOException {
+        for (FileSet fileSet : libraryPath) {
+            File libraryPathDirectory = fileSet.getDir();
+            DirectoryScanner directoryScanner = fileSet.getDirectoryScanner(getProject());
+            String[] includedFiles = directoryScanner.getIncludedFiles();
+
+            for (int i = 0; i < includedFiles.length; i++) {
+                String includedFile = includedFiles[i];
+                File source = new File(libraryPathDirectory, includedFile);
+                File destination = new File(macOSDirectory, new File(includedFile).getName());
+                copy(source, destination);
+            }
+        }
+    }
+
+    private void copyIcon(File resourcesDirectory) throws IOException {
+        if (icon == null) {
+            copy(getClass().getResource(DEFAULT_ICON_NAME), new File(resourcesDirectory, DEFAULT_ICON_NAME));
+        } else {
+            copy(icon, new File(resourcesDirectory, icon.getName()));
         }
     }
 

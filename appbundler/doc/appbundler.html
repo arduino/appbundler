@@ -109,19 +109,16 @@ runtime to embed in the application. Corresponds to the <code>JVMRuntime</code> 
 <tt>Info.plist</tt> file. If specified, the contents of this directory will be copied to the
 <tt>Contents/PlugIns/</tt> folder of the generated bundle. If unspecified, the target system must
 have a shared JRE installed in <tt>/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/</tt>.</p>
-<p>This element is optional.</p>
 
 <h4>classpath</h4>
 <p>A <a href="http://ant.apache.org/manual/Types/fileset.html">fileset</a> representing the class
 path of the bundled application. Corresponds to the <tt>java.class.path</tt> system property.
 Entries will be copied to the <tt>Contents/Java/</tt> folder of the generated bundle.</p>
-<p>This element is required.</p>
 
 <h4>librarypath</h4>
 <p>A <a href="http://ant.apache.org/manual/Types/fileset.html">fileset</a> representing the library
 path of the bundled application. Corresponds to the <tt>java.library.path</tt> system property.
 Entries will be copied to the <tt>Contents/MacOS/</tt> folder of the generated bundle.</p>
-<p>This element is optional.</p>
 
 <h4>option</h4>
 <p>Specifies a command-line option to be passed to the JVM at startup.</p>
