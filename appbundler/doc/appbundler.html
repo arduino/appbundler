@@ -106,9 +106,22 @@ questions.
 <h4>runtime</h4>
 <p>A <a href="http://ant.apache.org/manual/Types/fileset.html">fileset</a> representing the Java
 runtime to embed in the application. Corresponds to the <code>JVMRuntime</code> key in the
-<tt>Info.plist</tt> file. If specified, the contents of this directory will be copied to the
-<tt>Contents/PlugIns/</tt> folder of the generated bundle. If unspecified, the target system must
-have a shared JRE installed in <tt>/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/</tt>.</p>
+<tt>Info.plist</tt> file.</p>
+
+<p>This element is optional. If specified, the runtime will be copied to the
+<tt>Contents/PlugIns/</tt> folder of the generated bundle. If omitted, the target system must
+have a shared JRE installed in <tt>/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/</tt>
+in order to run the application.</p>
+
+<p>By default, the following runtime content will be excluded from the generated bundle:<p>
+<ul>
+<li><tt>Contents/Home/bin/</tt></li>
+<li><tt>Contents/Home/jre/bin/</tt></li>
+<li><tt>Contents/Home/man/</tt></li>
+<li><tt>Contents/Home/src.zip</tt></li>
+</ul>
+
+<p>Additional content can be excluded using nested <code>&lt;excludes/&gt;</code> elements.</p>
 
 <h4>classpath</h4>
 <p>A <a href="http://ant.apache.org/manual/Types/fileset.html">fileset</a> representing the class
@@ -151,8 +164,10 @@ Entries will be copied to the <tt>Contents/MacOS/</tt> folder of the generated b
 </table>
 
 <h3>Examples</h3>
-<p>Generate a launcher for the "Swing Set" demo, bundling the JRE defined by the
-<tt>JAVA_HOME</tt> environment variable with the resulting executable:</p>
+<p>Generate a launcher for the "Swing Set" demo, bundling the JRE defined by the <tt>JAVA_HOME</tt>
+environment variable with the resulting executable. In addition to the default excludes, the
+contents of the <tt>Contents/Home/db/</tt> and <tt>Contents/Home/lib/</tt> folders will also be
+excluded from the bundled runtime:</p>
 <pre>
 &lt;-- Import environment variables --&gt;
 &lt;property environment="env"/&gt;
@@ -169,6 +184,9 @@ Entries will be copied to the <tt>Contents/MacOS/</tt> folder of the generated b
         shortversion="1.0"
         mainclassname="SwingSet2"&gt;
         &lt;runtime dir="${env.JAVA_HOME}/../.."/&gt;
+            &lt;exclude name="Contents/Home/db/"/&gt;
+            &lt;exclude name="Contents/Home/lib/"/&gt;
+        &lt;/runtime&gt;
         &lt;classpath file="/Library/Java/Demos/JFC/SwingSet2/SwingSet2.jar"/&gt;
         &lt;option value="-Dapple.laf.useScreenMenuBar=true"/&gt;
     &lt;/bundleapp&gt;

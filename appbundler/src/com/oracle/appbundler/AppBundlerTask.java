@@ -128,7 +128,14 @@ public class AppBundlerTask extends Task {
 
         this.runtime = runtime;
 
-        // TODO Add default excludes
+        runtime.appendExcludes(new String[] {
+            "Contents/MacOS/",
+            "Contents/Info.plist",
+            "Contents/Home/bin/",
+            "Contents/Home/jre/bin/",
+            "Contents/Home/man/",
+            "Contents/Home/src.zip"
+        });
     }
 
     public void addConfiguredClassPath(FileSet classPath) {
