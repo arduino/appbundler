@@ -139,6 +139,7 @@ public class AppBundlerTask extends Task {
         });
 
         runtime.appendExcludes(new String[] {
+            "bin/",
             "jre/bin/"
         });
     }

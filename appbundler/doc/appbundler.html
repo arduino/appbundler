@@ -114,10 +114,12 @@ runtime environment to embed in the application.</p>
 
 <p>This element is optional. If specified, the base directory of the fileset must point to the
 root directory of a valid Java runtime environment. The contents of the runtime will be copied to
-the <tt>Contents/PlugIns/</tt> folder of the generated application bundle. By default, only the
-contents of the <tt>jre/</tt> directory (minus <tt>jre/bin/</tt>) will be included in the bundled
-application. Additional content can be included or excluded using nested
-<code>&lt;include&gt;</code> and <code>&lt;exclude&gt;</code> elements, respectively.</p>
+the <tt>Contents/PlugIns/</tt> folder of the generated application bundle.</p>
+
+<p>By default, only the contents of the <tt>jre/</tt> directory will be included with the bundled
+application. All executable content (i.e. <tt>bin/</tt>, <tt>jre/bin/</tt>) is excluded. Additional
+content can be included or excluded using nested <code>&lt;include&gt;</code> and
+<code>&lt;exclude&gt;</code> elements, respectively.</p>
 
 <p>If this element is omitted, a Java runtime environment will not be copied into the generated
 bundle, and target systems must have a shared JRE installed in
