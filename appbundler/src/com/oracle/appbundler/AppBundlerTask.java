@@ -65,6 +65,8 @@ public class AppBundlerTask extends Task {
     private String signature = "????";
     private String copyright = "";
 
+    private String applicationCategory = null;
+
     // JVM info properties
     private String mainClassName = null;
     private FileSet runtime = null;
@@ -115,6 +117,10 @@ public class AppBundlerTask extends Task {
 
     public void setCopyright(String copyright) {
         this.copyright = copyright;
+    }
+
+    public void setApplicationCategory(String applicationCategory) {
+        this.applicationCategory = applicationCategory;
     }
 
     public void setMainClassName(String mainClassName) {
@@ -389,6 +395,10 @@ public class AppBundlerTask extends Task {
             writeProperty(xout, "CFBundleSignature", signature);
             writeProperty(xout, "CFBundleVersion", "1");
             writeProperty(xout, "NSHumanReadableCopyright", copyright);
+
+            if (applicationCategory != null) {
+                writeProperty(xout, "LSApplicationCategoryType", applicationCategory);
+            }
 
             // Write runtime
             if (runtime != null) {

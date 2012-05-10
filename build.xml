@@ -115,6 +115,7 @@ questions.
             displayname="SwingSet 2"
             identifier="com.oracle.javax.swing.SwingSet2"
             shortversion="1.0"
+            applicationCategory="public.app-category.developer-tools"
             mainclassname="SwingSet2">
             <runtime dir="${env.JAVA_HOME}">
                 <exclude name="db/"/>
@@ -135,6 +136,7 @@ questions.
             displayname="SwingSet 2 (Plugin)"
             identifier="com.oracle.javax.swing.SwingSet2Plugin"
             shortversion="1.0"
+            applicationCategory="public.app-category.developer-tools"
             mainclassname="SwingSet2">
             <classpath file="/Library/Java/Demos/JFC/SwingSet2/SwingSet2.jar"/>
             <option value="-Dapple.laf.useScreenMenuBar=true"/>

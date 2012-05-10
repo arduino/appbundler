@@ -72,11 +72,8 @@ int launch(char *commandName) {
     // Get the main bundle
     NSBundle *mainBundle = [NSBundle mainBundle];
 
-    // Set the working directory to the main bundle root
-    NSString *mainBundlePath = [mainBundle bundlePath];
-    if (chdir([mainBundlePath UTF8String]) == -1) {
-        [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not set initial working directory."];
-    }
+    // Set the working directory to the user's home directory
+    chdir([NSHomeDirectory() UTF8String]);
 
     // Get the main bundle's info dictionary
     NSDictionary *infoDictionary = [mainBundle infoDictionary];
@@ -114,6 +111,7 @@ int launch(char *commandName) {
     }
 
     // Set the class path
+    NSString *mainBundlePath = [mainBundle bundlePath];
     NSString *javaPath = [mainBundlePath stringByAppendingString:@"/Contents/Java"];
     NSMutableString *classPath = [NSMutableString stringWithFormat:@"-Djava.class.path=%@/Classes", javaPath];
 
