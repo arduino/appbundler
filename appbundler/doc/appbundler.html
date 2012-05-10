@@ -114,17 +114,10 @@ runtime environment to embed in the application.</p>
 
 <p>This element is optional. If specified, the base directory of the fileset must point to the
 root directory of a valid Java runtime environment. The contents of the runtime will be copied to
-the <tt>Contents/PlugIns/</tt> folder of the generated application bundle. By default, the
-following content will be excluded from the bundled runtime:</p>
-
-<ul>
-<li><tt>bin/</tt></li>
-<li><tt>jre/bin/</tt></li>
-<li><tt>man/</tt></li>
-<li><tt>src.zip</tt></li>
-</ul>
-
-<p>Additional content can be excluded using nested <code>&lt;exclude&gt;</code> elements.</p>
+the <tt>Contents/PlugIns/</tt> folder of the generated application bundle. By default, only the
+contents of the <tt>jre/</tt> directory (minus <tt>jre/bin/</tt>) will be included in the bundled
+application. Additional content can be included or excluded using nested
+<code>&lt;include&gt;</code> and <code>&lt;exclude&gt;</code> elements, respectively.</p>
 
 <p>If this element is omitted, a Java runtime environment will not be copied into the generated
 bundle, and target systems must have a shared JRE installed in
@@ -172,9 +165,7 @@ Entries will be copied to the <tt>Contents/MacOS/</tt> folder of the generated b
 
 <h3>Examples</h3>
 <p>Generate a launcher for the "Swing Set" demo, bundling the JRE defined by the <tt>JAVA_HOME</tt>
-environment variable with the resulting executable. In addition to the default excludes, the
-contents of the <tt>db/</tt> and <tt>lib/</tt> folders will also be excluded from the bundled
-runtime:</p>
+environment variable with the resulting executable.</p>
 <pre>
 &lt;-- Import environment variables --&gt;
 &lt;property environment="env"/&gt;
@@ -189,11 +180,9 @@ runtime:</p>
         displayname="SwingSet 2"
         identifier="com.oracle.javax.swing.SwingSet2"
         shortversion="1.0"
+        applicationCategory="public.app-category.developer-tools"
         mainclassname="SwingSet2"&gt;
         &lt;runtime dir="${env.JAVA_HOME}"/&gt;
-            &lt;exclude name="db/"/&gt;
-            &lt;exclude name="lib/"/&gt;
-        &lt;/runtime&gt;
         &lt;classpath file="/Library/Java/Demos/JFC/SwingSet2/SwingSet2.jar"/&gt;
         &lt;option value="-Dapple.laf.useScreenMenuBar=true"/&gt;
     &lt;/bundleapp&gt;

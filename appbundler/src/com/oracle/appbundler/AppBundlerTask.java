@@ -134,11 +134,12 @@ public class AppBundlerTask extends Task {
 
         this.runtime = runtime;
 
+        runtime.appendIncludes(new String[] {
+            "jre/",
+        });
+
         runtime.appendExcludes(new String[] {
-            "bin/",
-            "jre/bin/",
-            "man/",
-            "src.zip"
+            "jre/bin/"
         });
     }
 

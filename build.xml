@@ -117,10 +117,7 @@ questions.
             shortversion="1.0"
             applicationCategory="public.app-category.developer-tools"
             mainclassname="SwingSet2">
-            <runtime dir="${env.JAVA_HOME}">
-                <exclude name="db/"/>
-                <exclude name="lib/"/>
-            </runtime>
+            <runtime dir="${env.JAVA_HOME}"/>
             <classpath file="/Library/Java/Demos/JFC/SwingSet2/SwingSet2.jar"/>
             <option value="-Dapple.laf.useScreenMenuBar=true"/>
             <argument value="foo=bar"/>
