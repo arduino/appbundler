@@ -140,7 +140,14 @@ public class AppBundlerTask extends Task {
 
         runtime.appendExcludes(new String[] {
             "bin/",
-            "jre/bin/"
+            "jre/bin/",
+            "jre/lib/deploy/",
+            "jre/lib/deploy.jar",
+            "jre/lib/javaws.jar",
+            "jre/lib/libdeploy.dylib",
+            "jre/lib/libnpjp2.dylib",
+            "jre/lib/plugin.jar",
+            "jre/lib/security/javaws.policy"
         });
     }
 
