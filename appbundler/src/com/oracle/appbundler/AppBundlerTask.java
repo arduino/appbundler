@@ -274,7 +274,7 @@ public class AppBundlerTask extends Task {
             File executableFile = new File(macOSDirectory, EXECUTABLE_NAME);
             copy(getClass().getResource(executableFile.getName()), executableFile);
 
-            executableFile.setExecutable(true);
+            executableFile.setExecutable(true, false);
 
             // Copy runtime to PlugIns folder
             copyRuntime(plugInsDirectory);
