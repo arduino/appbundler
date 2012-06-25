@@ -27,11 +27,8 @@ questions.
 
 <project name="appbundler" default="package">
     <property environment="env"/>
-
     <property file="build.properties"/>
-
     <property name="folder.src" value="src"/>
-    <property name="folder.native" value="native"/>
     <property name="folder.bin" value="bin"/>
     <property name="folder.classes" value="${folder.bin}/classes"/>
 
@@ -63,7 +60,6 @@ questions.
             </fileset>
         </copy>
 
-        <!-- TODO Move this to a makefile so we can reference the defines required by JLI_Launch() -->
         <exec executable="gcc">
             <arg value="-I"/>
             <arg value="${env.JAVA_HOME}/include"/>

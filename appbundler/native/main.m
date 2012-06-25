@@ -35,6 +35,8 @@
 #define JVM_OPTIONS_KEY "JVMOptions"
 #define JVM_ARGUMENTS_KEY "JVMArguments"
 
+#define APP_ROOT_PREFIX "$APP_ROOT"
+
 #define LIBJLI_DYLIB "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/jli/libjli.dylib"
 
 typedef int (JNICALL *JLI_Launch_t)(int argc, char ** argv,
@@ -152,12 +154,14 @@ int launch(char *commandName) {
     argv[i++] = strdup([libraryPath UTF8String]);
 
     for (NSString *option in options) {
+        option = [option stringByReplacingOccurrencesOfString:@APP_ROOT_PREFIX withString:[mainBundle bundlePath]];
         argv[i++] = strdup([option UTF8String]);
     }
 
     argv[i++] = strdup([mainClassName UTF8String]);
 
     for (NSString *argument in arguments) {
+        argument = [argument stringByReplacingOccurrencesOfString:@APP_ROOT_PREFIX withString:[mainBundle bundlePath]];
         argv[i++] = strdup([argument UTF8String]);
     }
 
