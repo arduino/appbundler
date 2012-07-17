@@ -1,4 +1,3 @@
-"JRELoadError" = "Could not load JRE.";
-"JRENotFound" = "A Java runtime environment could not be located.";
+"JRELoadError" = "Unable to load Java Runtime Environment.";
 "MainClassNameRequired" = "Main class name is required.";
-"JavaDirectoryNotFound" = "Could not enumerate Java directory contents.";
+"JavaDirectoryNotFound" = "Unable to enumerate Java directory contents.";

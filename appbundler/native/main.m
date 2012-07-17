@@ -89,20 +89,16 @@ int launch(char *commandName) {
     // Locate the JLI_Launch() function
     NSString *runtime = [infoDictionary objectForKey:@JVM_RUNTIME_KEY];
 
-    JLI_Launch_t jli_LaunchFxnPtr;
+    JLI_Launch_t jli_LaunchFxnPtr = NULL;
     if (runtime != nil) {
         NSURL *runtimeBundleURL = [[[NSBundle mainBundle] builtInPlugInsURL] URLByAppendingPathComponent:runtime];
         CFBundleRef runtimeBundle = CFBundleCreate(NULL, (CFURLRef)runtimeBundleURL);
 
         NSError *bundleLoadError = nil;
         Boolean runtimeBundleLoaded = CFBundleLoadExecutableAndReturnError(runtimeBundle, (CFErrorRef *)&bundleLoadError);
-        if (bundleLoadError != nil || !runtimeBundleLoaded) {
-            [[NSException exceptionWithName:@JAVA_LAUNCH_ERROR
-                reason:NSLocalizedString(@"JRELoadError", @UNSPECIFIED_ERROR)
-                userInfo:nil] raise];
+        if (bundleLoadError == nil && runtimeBundleLoaded) {
+            jli_LaunchFxnPtr = CFBundleGetFunctionPointerForName(runtimeBundle, CFSTR("JLI_Launch"));
         }
-
-        jli_LaunchFxnPtr = CFBundleGetFunctionPointerForName(runtimeBundle, CFSTR("JLI_Launch"));
     } else {
         void *libJLI = dlopen(LIBJLI_DYLIB, RTLD_LAZY);
         if (libJLI != NULL) {
@@ -112,7 +108,7 @@ int launch(char *commandName) {
 
     if (jli_LaunchFxnPtr == NULL) {
         [[NSException exceptionWithName:@JAVA_LAUNCH_ERROR
-            reason:NSLocalizedString(@"JRENotFound", @UNSPECIFIED_ERROR)
+            reason:NSLocalizedString(@"JRELoadError", @UNSPECIFIED_ERROR)
             userInfo:nil] raise];
     }
 
