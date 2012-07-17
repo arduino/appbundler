@@ -31,6 +31,7 @@ questions.
     <property name="folder.src" value="src"/>
     <property name="folder.bin" value="bin"/>
     <property name="folder.classes" value="${folder.bin}/classes"/>
+    <property name="folder.res" value="res"/>
 
     <!-- Compile target -->
     <target name="compile">
@@ -87,6 +88,10 @@ questions.
 
     <!-- Package target -->
     <target name="package" depends="compile">
+        <zip destfile="${ant.project.name}/${folder.classes}/com/oracle/appbundler/res.zip">
+            <fileset dir="${ant.project.name}/${folder.res}"/>
+        </zip>
+
         <jar destfile="${ant.project.name}/${folder.bin}/${ant.project.name}-${version}.jar" index="true">
             <manifest>
                 <attribute name="Implementation-Vendor-Id" value="com.oracle"/>
@@ -97,6 +102,7 @@ questions.
             <fileset dir="${ant.project.name}/${folder.classes}"/>
             <fileset dir="${ant.project.name}/${folder.bin}">
                 <include name="JavaAppLauncher"/>
+                <include name="*.zip"/>
             </fileset>
         </jar>
     </target>
@@ -144,7 +150,7 @@ questions.
             <include name="**/*.html"/>
             <include name="**/*.java"/>
             <include name="**/*.m"/>
-            <include name="**/*.properties"/>
+            <include name="**/*.strings"/>
             <include name="**/*.xml"/>
         </fileset>
         <replaceregexp match="[\t]" replace="    " flags="gm" byline="true">
