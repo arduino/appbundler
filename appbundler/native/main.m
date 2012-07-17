@@ -35,6 +35,8 @@
 #define JVM_OPTIONS_KEY "JVMOptions"
 #define JVM_ARGUMENTS_KEY "JVMArguments"
 
+#define UNSPECIFIED_ERROR "An unknown error occurred."
+
 #define APP_ROOT_PREFIX "$APP_ROOT"
 
 #define LIBJLI_DYLIB "/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Home/lib/jli/libjli.dylib"
@@ -61,7 +63,11 @@ int main(int argc, char *argv[]) {
         launch(argv[0]);
         result = 0;
     } @catch (NSException *exception) {
-        NSLog(@"%@: %@", exception, [exception callStackSymbols]);
+        NSAlert *alert = [[NSAlert alloc] init];
+        [alert setAlertStyle:NSCriticalAlertStyle];
+        [alert setMessageText:[exception reason]];
+        [alert runModal];
+
         result = 1;
     }
 
@@ -91,7 +97,9 @@ int launch(char *commandName) {
         NSError *bundleLoadError = nil;
         Boolean runtimeBundleLoaded = CFBundleLoadExecutableAndReturnError(runtimeBundle, (CFErrorRef *)&bundleLoadError);
         if (bundleLoadError != nil || !runtimeBundleLoaded) {
-            [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not load JRE from %@.", bundleLoadError];
+            [[NSException exceptionWithName:@JAVA_LAUNCH_ERROR
+                reason:NSLocalizedString(@"JRELoadError", @UNSPECIFIED_ERROR)
+                userInfo:nil] raise];
         }
 
         jli_LaunchFxnPtr = CFBundleGetFunctionPointerForName(runtimeBundle, CFSTR("JLI_Launch"));
@@ -103,13 +111,17 @@ int launch(char *commandName) {
     }
 
     if (jli_LaunchFxnPtr == NULL) {
-        [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not get function pointer for JLI_Launch."];
+        [[NSException exceptionWithName:@JAVA_LAUNCH_ERROR
+            reason:NSLocalizedString(@"JRENotFound", @UNSPECIFIED_ERROR)
+            userInfo:nil] raise];
     }
 
     // Get the main class name
     NSString *mainClassName = [infoDictionary objectForKey:@JVM_MAIN_CLASS_NAME_KEY];
     if (mainClassName == nil) {
-        [NSException raise:@JAVA_LAUNCH_ERROR format:@"%@ is required.", @JVM_MAIN_CLASS_NAME_KEY];
+        [[NSException exceptionWithName:@JAVA_LAUNCH_ERROR
+            reason:NSLocalizedString(@"MainClassNameRequired", @UNSPECIFIED_ERROR)
+            userInfo:nil] raise];
     }
 
     // Set the class path
@@ -120,7 +132,9 @@ int launch(char *commandName) {
     NSFileManager *defaultFileManager = [NSFileManager defaultManager];
     NSArray *javaDirectoryContents = [defaultFileManager contentsOfDirectoryAtPath:javaPath error:nil];
     if (javaDirectoryContents == nil) {
-        [NSException raise:@JAVA_LAUNCH_ERROR format:@"Could not enumerate Java directory contents."];
+        [[NSException exceptionWithName:@JAVA_LAUNCH_ERROR
+            reason:NSLocalizedString(@"JavaDirectoryNotFound", @UNSPECIFIED_ERROR)
+            userInfo:nil] raise];
     }
 
     for (NSString *file in javaDirectoryContents) {
