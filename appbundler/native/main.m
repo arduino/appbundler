@@ -89,21 +89,19 @@ int launch(char *commandName) {
     // Locate the JLI_Launch() function
     NSString *runtime = [infoDictionary objectForKey:@JVM_RUNTIME_KEY];
 
-    JLI_Launch_t jli_LaunchFxnPtr = NULL;
+    const char *libjliPath = NULL;
     if (runtime != nil) {
-        NSURL *runtimeBundleURL = [[[NSBundle mainBundle] builtInPlugInsURL] URLByAppendingPathComponent:runtime];
-        CFBundleRef runtimeBundle = CFBundleCreate(NULL, (CFURLRef)runtimeBundleURL);
-
-        NSError *bundleLoadError = nil;
-        Boolean runtimeBundleLoaded = CFBundleLoadExecutableAndReturnError(runtimeBundle, (CFErrorRef *)&bundleLoadError);
-        if (bundleLoadError == nil && runtimeBundleLoaded) {
-            jli_LaunchFxnPtr = CFBundleGetFunctionPointerForName(runtimeBundle, CFSTR("JLI_Launch"));
-        }
+        NSString *runtimePath = [[[NSBundle mainBundle] builtInPlugInsPath] stringByAppendingPathComponent:runtime];
+        libjliPath = [[runtimePath stringByAppendingPathComponent:@"Contents/Home/jre/lib/jli/libjli.dylib"] fileSystemRepresentation];
     } else {
-        void *libJLI = dlopen(LIBJLI_DYLIB, RTLD_LAZY);
-        if (libJLI != NULL) {
-            jli_LaunchFxnPtr = dlsym(libJLI, "JLI_Launch");
-        }
+        libjliPath = LIBJLI_DYLIB;
+    }
+
+    void *libJLI = dlopen(libjliPath, RTLD_LAZY);
+
+    JLI_Launch_t jli_LaunchFxnPtr = NULL;
+    if (libJLI != NULL) {
+        jli_LaunchFxnPtr = dlsym(libJLI, "JLI_Launch");
     }
 
     if (jli_LaunchFxnPtr == NULL) {

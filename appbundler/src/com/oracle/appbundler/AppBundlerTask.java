@@ -352,10 +352,6 @@ public class AppBundlerTask extends Task {
             File pluginContentsDirectory = new File(pluginDirectory, runtimeContentsDirectory.getName());
             pluginContentsDirectory.mkdir();
 
-            // Copy MacOS directory
-            File runtimeMacOSDirectory = new File(runtimeContentsDirectory, "MacOS");
-            copy(runtimeMacOSDirectory, new File(pluginContentsDirectory, runtimeMacOSDirectory.getName()));
-
             // Copy Info.plist file
             File runtimeInfoPlistFile = new File(runtimeContentsDirectory, "Info.plist");
             copy(runtimeInfoPlistFile, new File(pluginContentsDirectory, runtimeInfoPlistFile.getName()));
