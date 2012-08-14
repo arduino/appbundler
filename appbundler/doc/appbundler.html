@@ -180,14 +180,14 @@ environment variable with the resulting executable.</p>
 &lt;-- Create the app bundle --&gt;
 &lt;target name="bundle-swingset" depends="package"&gt;
     &lt;bundleapp outputdirectory="."
-        name="SwingSet2"
-        displayname="SwingSet 2"
-        identifier="com.oracle.javax.swing.SwingSet2"
+        name="Test"
+        displayname="Test"
+        identifier="com.oracle.javafx.swing.Test"
         shortversion="1.0"
         applicationCategory="public.app-category.developer-tools"
-        mainclassname="SwingSet2"&gt;
+        mainclassname="com/javafx/main/Main"&gt;
         &lt;runtime dir="${env.JAVA_HOME}"/&gt;
-        &lt;classpath file="/Library/Java/Demos/JFC/SwingSet2/SwingSet2.jar"/&gt;
+        &lt;classpath file="${user.home}/bin/javafx-samples-2.2.0/SwingInterop.jar"/&gt;
         &lt;option value="-Dapple.laf.useScreenMenuBar=true"/&gt;
     &lt;/bundleapp&gt;
 &lt;/target&gt;
