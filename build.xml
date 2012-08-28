@@ -70,10 +70,11 @@ questions.
             <arg value="${ant.project.name}/${folder.classes}/com/oracle/appbundler/JavaAppLauncher"/>
             <arg value="-framework"/>
             <arg value="Cocoa"/>
-            <arg value="-F"/>
-            <arg value="${env.JAVA_HOME}/../.."/>
-            <arg value="-m64"/>
-            <arg value="-std=c99"/>
+            <arg value="-arch"/>
+            <arg value="x86_64"/>
+            <arg value="-isysroot"/>
+            <arg value="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk"/>
+            <arg value="-mmacosx-version-min=10.7"/>
             <arg value="appbundler/native/main.m"/>
         </exec>
     </target>
