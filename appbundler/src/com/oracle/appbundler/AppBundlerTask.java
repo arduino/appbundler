@@ -68,6 +68,7 @@ public class AppBundlerTask extends Task {
     private File icon = null;
 
     private String shortVersion = "1.0";
+    private String version = "1";
     private String signature = "????";
     private String copyright = "";
 
@@ -118,6 +119,10 @@ public class AppBundlerTask extends Task {
 
     public void setShortVersion(String shortVersion) {
         this.shortVersion = shortVersion;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     public void setSignature(String signature) {
@@ -465,7 +470,7 @@ public class AppBundlerTask extends Task {
             writeProperty(xout, "CFBundlePackageType", OS_TYPE_CODE);
             writeProperty(xout, "CFBundleShortVersionString", shortVersion);
             writeProperty(xout, "CFBundleSignature", signature);
-            writeProperty(xout, "CFBundleVersion", "1");
+            writeProperty(xout, "CFBundleVersion", version);
             writeProperty(xout, "NSHumanReadableCopyright", copyright);
 
             if (applicationCategory != null) {
