@@ -41,6 +41,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -79,6 +80,7 @@ public class AppBundlerTask extends Task {
     private ArrayList<FileSet> libraryPath = new ArrayList<>();
     private ArrayList<String> options = new ArrayList<>();
     private ArrayList<String> arguments = new ArrayList<>();
+    private List<DocumentType> documentTypes = new ArrayList<>();
 
     private static final String EXECUTABLE_NAME = "JavaAppLauncher";
     private static final String DEFAULT_ICON_NAME = "GenericApp.icns";
@@ -186,6 +188,10 @@ public class AppBundlerTask extends Task {
         arguments.add(value);
     }
 
+    public void addDocumentType(DocumentType documentType) {
+         documentTypes.add(documentType);
+    }
+
     @Override
     public void execute() throws BuildException {
         // Validate required properties
@@ -243,6 +249,15 @@ public class AppBundlerTask extends Task {
             throw new IllegalStateException("Main class name is required.");
         }
 
+        for (DocumentType documentType : documentTypes) {
+            if(documentType.getName() == null) {
+                throw new IllegalStateException("Name is required for document type.");
+            }
+            if (!documentType.getIcon().exists()) {
+                throw new IllegalStateException("Document icon does not exist.");
+            }
+        }
+
         // Create the app bundle
         try {
             System.out.println("Creating app bundle: " + name);
@@ -297,6 +312,12 @@ public class AppBundlerTask extends Task {
 
             // Copy icon to Resources folder
             copyIcon(resourcesDirectory);
+
+            for(DocumentType documentType : documentTypes) {
+                if (documentType.getIcon() != null) {
+                    copy(documentType.getIcon(), new File(resourcesDirectory, documentType.getIcon().getName()));
+                }
+            }
         } catch (IOException exception) {
             throw new BuildException(exception);
         }
@@ -451,6 +472,25 @@ public class AppBundlerTask extends Task {
                 writeProperty(xout, "LSApplicationCategoryType", applicationCategory);
             }
 
+            if ( ! documentTypes.isEmpty()) {
+                writeKey(xout, "CFBundleDocumentTypes");
+                xout.writeStartElement(ARRAY_TAG);
+                xout.writeCharacters("\n");
+                for (DocumentType documentType : documentTypes) {
+                    writeProperty(xout, "CFBundleTypeName", documentType.getName());
+                    writeProperty(xout, "CFBundleTypeRole", documentType.getRole().name());
+                    if (documentType.getIcon() != null) {
+                        writeProperty(xout, "CFBundleTypeIconFile", documentType.getIcon().getName());
+                    }
+                    writeStringList(xout, "CFBundleTypeExtensions", documentType.getExtensions());
+                    writeStringList(xout, "CFBundleTypeMIMETypes", documentType.getMimeTypes());
+                    writeStringList(xout, "CFBundleTypeOSTypes", documentType.getOsTypes());
+
+                }
+                xout.writeEndElement();
+                xout.writeCharacters("\n");
+            }
+
             // Write runtime
             if (runtime != null) {
                 writeProperty(xout, "JVMRuntime", runtime.getDir().getParentFile().getParentFile().getName());
@@ -522,6 +562,19 @@ public class AppBundlerTask extends Task {
     private void writeProperty(XMLStreamWriter xout, String key, String value) throws XMLStreamException {
         writeKey(xout, key);
         writeString(xout, value);
+    }
+
+    private void writeStringList(XMLStreamWriter xout, String key, List<? extends AbstractKeyValue> list) throws XMLStreamException {
+        if ( ! list.isEmpty()) {
+            writeKey(xout, key);
+            xout.writeStartElement(ARRAY_TAG);
+            xout.writeCharacters("\n");
+            for (AbstractKeyValue extension : list) {
+                writeString(xout, extension.getValue());
+            }
+            xout.writeEndElement();
+            xout.writeCharacters("\n");
+        }
     }
 
     private void writePkgInfo(File file) throws IOException {
