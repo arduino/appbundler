@@ -472,6 +472,7 @@ public class AppBundlerTask extends Task {
             writeProperty(xout, "CFBundleSignature", signature);
             writeProperty(xout, "CFBundleVersion", version);
             writeProperty(xout, "NSHumanReadableCopyright", copyright);
+            writeProperty(xout, "NSHighResolutionCapable", "true");
 
             if (applicationCategory != null) {
                 writeProperty(xout, "LSApplicationCategoryType", applicationCategory);
