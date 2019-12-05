@@ -64,13 +64,13 @@ questions.
             </fileset>
         </copy>
 
-        <exec executable="/usr/libexec/java_home" outputproperty="libexec_javahome" />
+        <!--<exec executable="/usr/libexec/java_home" outputproperty="libexec_javahome" />-->
         <condition property="javahome" value="${env.JAVA_HOME}" else="${libexec_javahome}">
             <isset property="env.JAVA_HOME"/>
         </condition>
 
-        <exec executable="${cc}">
-            <arg line="${arch64} ${arch32}"/>
+        <exec executable="${cc}" failonerror="true">
+            <arg line="${arch64}"/>
             <arg value="-I"/>
             <arg value="${javahome}/include"/>
             <arg value="-I"/>
@@ -83,7 +83,7 @@ questions.
             <arg value="-F"/>
             <arg value="${javahome}/../.."/>
             <arg value="-isysroot"/>
-            <arg value="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk"/>
+            <arg value="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"/>
             <arg value="-mmacosx-version-min=10.7"/>
             <arg value="appbundler/native/main.m"/>
         </exec>
