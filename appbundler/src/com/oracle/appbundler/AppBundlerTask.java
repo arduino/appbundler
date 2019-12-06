@@ -76,19 +76,21 @@ public class AppBundlerTask extends Task {
     private String copyright = "";
     private String privileged = null;
     private String workingDirectory = null;
-    private String minimumSystemVersion = null;    
+    private String minimumSystemVersion = null;  
+    private String jvmRequired = "1.7";
+    private boolean jrePreferred = false;
+    private boolean jdkPreferred = false;
 
     private String applicationCategory = null;
 
     private boolean highResolutionCapable = true;
     private boolean supportsAutomaticGraphicsSwitching = true;
     private boolean hideDockIcon = false;
+    private boolean isDebug = false;
 
     // JVM info properties
     private String mainClassName = null;
-    private String jnlpLauncherName = null;
-    private String jarLauncherName = null;
-    private FileSet runtime = null;
+    private Runtime runtime = null;
     private ArrayList<FileSet> classPath = new ArrayList<>();
     private ArrayList<FileSet> libraryPath = new ArrayList<>();
     private ArrayList<Option> options = new ArrayList<>();
@@ -96,8 +98,10 @@ public class AppBundlerTask extends Task {
     private ArrayList<String> architectures = new ArrayList<>();
     private ArrayList<String> registeredProtocols = new ArrayList<>();
     private ArrayList<BundleDocument> bundleDocuments = new ArrayList<>();
-    
+    private ArrayList<PlistEntry> plistEntries = new ArrayList<>();
+
     private Reference classPathRef;
+    private ArrayList<String> plistClassPaths = new ArrayList<>();
 
     private static final String EXECUTABLE_NAME = "JavaAppLauncher";
     private static final String DEFAULT_ICON_NAME = "GenericApp.icns";
@@ -161,6 +165,18 @@ public class AppBundlerTask extends Task {
         this.workingDirectory = workingDirectory;
     }
     
+    public void setJVMRequired(String v){
+        this.jvmRequired = v;
+    }
+        
+    public void setJREPreferred(boolean preferred){
+        this.jrePreferred = preferred;
+    }
+        
+    public void setJDKPreferred(boolean preferred){
+        this.jdkPreferred = preferred;
+    }
+
     public void setMinimumSystemVersion(String v){
         this.minimumSystemVersion = v;
     }
@@ -177,6 +193,10 @@ public class AppBundlerTask extends Task {
         this.hideDockIcon = hideDock;
     }
     
+    public void setDebug(boolean enabled) {
+        this.isDebug = enabled;
+    }
+
     public void setSupportsAutomaticGraphicsSwitching(boolean supportsAutomaticGraphicsSwitching) {
         this.supportsAutomaticGraphicsSwitching = supportsAutomaticGraphicsSwitching;
     }
@@ -184,41 +204,23 @@ public class AppBundlerTask extends Task {
     public void setMainClassName(String mainClassName) {
         this.mainClassName = mainClassName;
     }
-    
-    public void setJnlpLauncherName(String jnlpLauncherName) {
-        this.jnlpLauncherName = jnlpLauncherName;
-    }
-    
-    public void setJarLauncherName(String jarLauncherName) {
-        this.jarLauncherName = jarLauncherName;
-    }
-    
-   public void addConfiguredRuntime(FileSet runtime) throws BuildException {
+
+    public void addConfiguredRuntime(Runtime runtime) throws BuildException {
         if (this.runtime != null) {
             throw new BuildException("Runtime already specified.");
         }
 
         this.runtime = runtime;
-
-        runtime.appendIncludes(new String[] {
-            "jre/",
-        });
-
-        runtime.appendExcludes(new String[] {
-            "bin/",
-            "jre/bin/",
-            "jre/lib/deploy/",
-            "jre/lib/deploy.jar",
-            "jre/lib/javaws.jar",
-            "jre/lib/libdeploy.dylib",
-            "jre/lib/libnpjp2.dylib",
-            "jre/lib/plugin.jar",
-            "jre/lib/security/javaws.policy"
-        });
     }
              
     public void setClasspathRef(Reference ref) {   
         this.classPathRef = ref;                                         
+    }
+
+    public void setPlistClassPaths(String plistClassPaths) {
+        for (String tok : plistClassPaths.split("\\s*,\\s*")) {
+            this.plistClassPaths.add(tok);
+        }
     }
 
     public void addConfiguredClassPath(FileSet classPath) {
@@ -231,6 +233,17 @@ public class AppBundlerTask extends Task {
     
     public void addConfiguredBundleDocument(BundleDocument document) {
         this.bundleDocuments.add(document);
+    }
+
+    public void addConfiguredPlistEntry(PlistEntry plistEntry) {
+        if (plistEntry.getKey() == null) {
+            throw new BuildException("Name is required.");
+        }
+        if (plistEntry.getValue() == null) {
+            throw new BuildException("Value is required.");
+        }
+
+        this.plistEntries.add(plistEntry);
     }
 
     public void addConfiguredOption(Option option) throws BuildException {
@@ -325,8 +338,8 @@ public class AppBundlerTask extends Task {
             throw new IllegalStateException("Copyright is required.");
         }
 
-        if (jnlpLauncherName == null && mainClassName == null) {
-            throw new IllegalStateException("Main class name or JNLP launcher name is required.");
+        if (mainClassName == null) {
+            throw new IllegalStateException("Main class name is required.");
         }
 
         // Create the app bundle
@@ -384,8 +397,17 @@ public class AppBundlerTask extends Task {
             // Copy library path entries to MacOS folder
             copyLibraryPathEntries(macOSDirectory);
 
-            // Copy icon to Resources folder
+            // Copy app icon to Resources folder
             copyIcon(resourcesDirectory);
+
+            // Copy app document icons to Resources folder
+            for(BundleDocument bundleDocument: bundleDocuments) {
+                if(bundleDocument.hasIcon()) {
+                    File ifile = bundleDocument.getIconFile();
+                    if (ifile != null) {
+                        copyDocumentIcon(ifile,resourcesDirectory); }
+                }
+            }
         } catch (IOException exception) {
             throw new BuildException(exception);
         }
@@ -429,38 +451,7 @@ public class AppBundlerTask extends Task {
 
     private void copyRuntime(File plugInsDirectory) throws IOException {
         if (runtime != null) {
-            File runtimeHomeDirectory = runtime.getDir();
-            File runtimeContentsDirectory = runtimeHomeDirectory.getParentFile();
-            File runtimeDirectory = runtimeContentsDirectory.getParentFile();
-
-            // Create root plug-in directory
-            File pluginDirectory = new File(plugInsDirectory, runtimeDirectory.getName());
-            pluginDirectory.mkdir();
-
-            // Create Contents directory
-            File pluginContentsDirectory = new File(pluginDirectory, runtimeContentsDirectory.getName());
-            pluginContentsDirectory.mkdir();
-
-            // Copy MacOS directory
-            File runtimeMacOSDirectory = new File(runtimeContentsDirectory, "MacOS");
-            copy(runtimeMacOSDirectory, new File(pluginContentsDirectory, runtimeMacOSDirectory.getName()));
-
-            // Copy Info.plist file
-            File runtimeInfoPlistFile = new File(runtimeContentsDirectory, "Info.plist");
-            copy(runtimeInfoPlistFile, new File(pluginContentsDirectory, runtimeInfoPlistFile.getName()));
-
-            // Copy included contents of Home directory
-            File pluginHomeDirectory = new File(pluginContentsDirectory, runtimeHomeDirectory.getName());
-
-            DirectoryScanner directoryScanner = runtime.getDirectoryScanner(getProject());
-            String[] includedFiles = directoryScanner.getIncludedFiles();
-
-            for (int i = 0; i < includedFiles.length; i++) {
-                String includedFile = includedFiles[i];
-                File source = new File(runtimeHomeDirectory, includedFile);
-                File destination = new File(pluginHomeDirectory, includedFile);
-                copy(source, destination);
-            }
+            runtime.copyTo(plugInsDirectory);
         }
     }
 
@@ -514,6 +505,14 @@ public class AppBundlerTask extends Task {
             copy(getClass().getResource(DEFAULT_ICON_NAME), new File(resourcesDirectory, DEFAULT_ICON_NAME));
         } else {
             copy(icon, new File(resourcesDirectory, icon.getName()));
+        }
+    }
+
+    private void copyDocumentIcon(File ifile, File resourcesDirectory) throws IOException {
+        if (icon == null) {
+            return;
+        } else {
+            copy(ifile, new File(resourcesDirectory, ifile.getName()));
         }
     }
 
@@ -604,26 +603,51 @@ public class AppBundlerTask extends Task {
                 writeProperty(xout, "JVMRuntime", runtime.getDir().getParentFile().getParentFile().getName());
             }
             
+            if ( jvmRequired != null ) {
+                writeProperty(xout, "JVMVersion", jvmRequired);
+            }
+            
             if ( privileged != null ) {
                 writeProperty(xout, "JVMRunPrivileged", privileged);
             }
             
+            if ( jrePreferred ) {
+                writeKey(xout, "JREPreferred");
+                writeBoolean(xout, true); 
+                xout.writeCharacters("\n");
+            }
+            if ( jdkPreferred ) {
+                writeKey(xout, "JDKPreferred");
+                writeBoolean(xout, true); 
+                xout.writeCharacters("\n");
+            }
+
             if ( workingDirectory != null ) {
                 writeProperty(xout, "WorkingDirectory", workingDirectory);
             }
 
-            if ( jnlpLauncherName != null ) {
-                // Write jnlp launcher name
-                writeProperty(xout, "JVMJNLPLauncher", jnlpLauncherName);
-            } else {
-                // Write main class name
-                writeProperty(xout, "JVMMainClassName", mainClassName);
+            // Write main class name
+            writeProperty(xout, "JVMMainClassName", mainClassName);
+
+           // Write classpaths in plist, if specified
+            if (!plistClassPaths.isEmpty()) {
+                writeKey(xout, "JVMClassPath");
+                xout.writeStartElement(ARRAY_TAG);
+                xout.writeCharacters("\n");
+                for (String cp : plistClassPaths) {
+                    writeString(xout, cp);
+                }
+                xout.writeEndElement();
+                xout.writeCharacters("\n");
             }
 
-            if ( jarLauncherName != null ) {
-                writeProperty(xout, "JVMJARLauncher", jarLauncherName);
+            // Write whether launcher be verbose with debug msgs
+            if (isDebug) {
+                writeKey(xout, "JVMDebug");
+                writeBoolean(xout, isDebug);
+                xout.writeCharacters("\n");
             }
-            
+
             // Write CFBundleDocument entries
             writeKey(xout, "CFBundleDocumentTypes");
             
@@ -645,7 +669,15 @@ public class AppBundlerTask extends Task {
                 
                 if(bundleDocument.hasIcon()) {
                     writeKey(xout, "CFBundleTypeIconFile");
-                    writeString(xout, bundleDocument.getIcon());
+
+                    File ifile = bundleDocument.getIconFile();
+                    
+                    if (ifile != null) {
+                        writeString(xout, ifile.getName());
+                    }
+                    else {
+                        writeString(xout, bundleDocument.getIcon());
+                    }
                 }
                 
                 writeKey(xout, "CFBundleTypeName");
@@ -728,6 +760,12 @@ public class AppBundlerTask extends Task {
             xout.writeEndElement();
             xout.writeCharacters("\n");
 
+            // Write arbitrary key-value pairs
+            for (PlistEntry item : plistEntries) {
+                writeKey(xout, item.getKey());
+                writeString(xout, item.getValue());
+            }
+
             // End root dictionary
             xout.writeEndElement();
             xout.writeCharacters("\n");
@@ -802,9 +840,14 @@ public class AppBundlerTask extends Task {
         try (InputStream in = location.openStream()) {
             Files.copy(in, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
+        catch (Exception exc)
+        {
+        System.err.println ("Trying to copy " + location + " to " + file);
+            throw exc;
+        }
     }
 
-    private static void copy(File source, File destination) throws IOException {
+    static void copy(File source, File destination) throws IOException {
         Path sourcePath = source.toPath();
         Path destinationPath = destination.toPath();
 
