@@ -83,8 +83,13 @@ questions.
             <arg value="-F"/>
             <arg value="${javahome}/../.."/>
             <arg value="-isysroot"/>
-            <arg value="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"/>
-            <arg value="-mmacosx-version-min=10.7"/>
+
+            <!-- WARNING: Do NOT use SDK with version superior to 10.9 because side effects have been
+                 reported in applications using OpenGL, in particular AWT based java apps crashing
+                 when using multi-monitor setups. See https://github.com/arduino/Arduino/pull/10234 and
+                 related issues for details. -->
+            <arg value="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk"/>
+
             <arg value="appbundler/native/main.m"/>
         </exec>
     </target>
