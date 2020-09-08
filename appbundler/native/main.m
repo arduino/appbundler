@@ -286,6 +286,7 @@ int launcherMain(const char *commandName, int progargc, char *progargv[]) {
     }
     NSArray *jvmClassPath = [plist objectForKey:@"JVMClassPath"];
     NSDictionary *jvmDefaultOptions = [plist objectForKey:@"JVMDefaultOptions"];
+    bool searchSystemJVM = ([plist objectForKey:@"SearchSystemJVM"] != nil);
 
     // Print bundle information
     NSLog(@"Loading Application '%@'", bundleName);
@@ -297,6 +298,7 @@ int launcherMain(const char *commandName, int progargc, char *progargv[]) {
     NSLog(@"JVMArguments=%@", jvmArguments);
     NSLog(@"JVMClasspath=%@", jvmClassPath);
     NSLog(@"JVMDefaultOptions=%@", jvmDefaultOptions);
+    NSLog(@"SearchSystemJVM=%@", searchSystemJVM ? @"true" : @"false");
     NSLog(@"-> Bundle path: %@", bundlePath);
     NSLog(@"-> Working Directory: '%@'", workingDir);
     NSLog(@"-> JVM Runtime path: %@", jvmRuntimePath);
@@ -305,7 +307,10 @@ int launcherMain(const char *commandName, int progargc, char *progargv[]) {
     chdir([workingDir UTF8String]);
 
     // Search JVM
-    NSString *javaDylib = findJavaDylib();
+    NSString *javaDylib = nil;
+    if (searchSystemJVM) {
+        javaDylib = findJavaDylib();
+    }
     if (javaDylib != nil) {
         NSLog(@"-> JVM Runtime path updated to: %@", jvmRuntimePath);
     } else if (jvmRuntime != nil) {
