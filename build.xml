@@ -92,6 +92,18 @@ questions.
 
             <arg value="appbundler/native/main.m"/>
         </exec>
+
+        <exec executable="codesign" failonerror="true">
+            <arg value="-s" />
+            <arg value="ARDUINO SA" />
+            <arg value="-fv" />
+            <arg value="--keychain" />
+            <arg value="${keychain}" />
+            <arg value="--options" />
+            <arg value="runtime" />
+            <arg value="--timestamp" />
+            <arg value="appbundler/bin/com/oracle/appbundler/JavaAppLauncher" />
+        </exec>
     </target>
 
     <!-- Clean target -->
